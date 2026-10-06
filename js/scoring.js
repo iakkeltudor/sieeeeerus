@@ -103,6 +103,17 @@ export function validateNight(night, roster = null) {
       }
     }
   }
+  if (night.beers != null) {
+    if (typeof night.beers !== 'object' || Array.isArray(night.beers)) problems.push('beers must look like { "Name": { "Beer": 2 } }');
+    else for (const [name, drinks] of Object.entries(night.beers)) {
+      if (roster && !roster.includes(name)) problems.push(`beers: "${name}" is not in the season's players list`);
+      else if (Array.isArray(night.attendees) && !night.attendees.includes(name)) problems.push(`beers: ${name} has beers but isn't listed as attending`);
+      for (const [beer, count] of Object.entries(drinks ?? {})) {
+        if (!beer.trim()) problems.push(`beers: ${name} has a beer with no name`);
+        if (typeof count !== 'number' || count <= 0) problems.push(`beers: ${name}'s ${beer || 'beer'} count must be a number above 0`);
+      }
+    }
+  }
   if (night.rounds != null) {
     if (!Array.isArray(night.rounds) || night.rounds.length !== 8) problems.push('rounds must list 8 scores');
     else night.rounds.forEach((s, i) => {
@@ -186,6 +197,67 @@ export function scoreSeason(season) {
     rounds: roundStats(scored),
     attendance: attendance(season.players, scored),
     personal: personalStandings(season.players, scored),
+    beers: beerStats(season.players, scored),
+  };
+}
+
+// BeerTracker ----------------------------------------------------------------
+// night.beers = { "<player>": { "<beer name>": count } }. A night counts as logged once it
+// has a `beers` entry, so per-night averages ignore nights nobody wrote down.
+const beerKey = (name) => name.trim().toLowerCase();
+
+export function beerStats(players, nights) {
+  if (!Array.isArray(players) || !players.length) return null;
+  const logged = nights.filter((n) => n.played && n.beers && typeof n.beers === 'object');
+  const types = new Map(); // key -> { name, count }
+  let record = null;
+
+  const rows = players.map((name, order) => {
+    const mine = new Map();
+    let total = 0;
+    let nightsLogged = 0;
+    for (const n of logged) {
+      if (Array.isArray(n.attendees) && n.attendees.includes(name)) nightsLogged++;
+      const drinks = n.beers[name];
+      if (!drinks) continue;
+      let tonight = 0;
+      for (const [beer, count] of Object.entries(drinks)) {
+        if (typeof count !== 'number' || count <= 0) continue;
+        const k = beerKey(beer);
+        tonight += count;
+        if (!mine.has(k)) mine.set(k, { key: k, count: 0 });
+        mine.get(k).count += count;
+        if (!types.has(k)) types.set(k, { name: beer.trim(), count: 0 });
+        types.get(k).count += count;
+      }
+      total += tonight;
+      if (tonight && (!record || tonight > record.count)) record = { count: tonight, holders: [] };
+      if (tonight && tonight === record.count) record.holders.push({ player: name, night: n.id });
+    }
+    return { name, order, mine, total: tidy(total), nightsLogged, perNight: nightsLogged ? tidy(total / nightsLogged) : null };
+  });
+  // Show every beer with the team-wide spelling (the first one written down).
+  for (const r of rows) {
+    r.beers = [...r.mine.values()]
+      .map(({ key, count }) => ({ name: types.get(key).name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    r.favourite = r.beers[0] ?? null;
+    delete r.mine;
+  }
+  rows.sort((a, b) => b.total - a.total || (b.perNight ?? 0) - (a.perNight ?? 0) || a.order - b.order);
+  rows.forEach((r, i) => {
+    const prev = rows[i - 1];
+    r.rank = prev && prev.total === r.total && prev.perNight === r.perNight ? prev.rank : i + 1;
+  });
+
+  const total = tidy(sum(rows.map((r) => r.total)));
+  return {
+    nights: logged.length,
+    total,
+    perNight: logged.length ? tidy(total / logged.length) : null,
+    record,
+    rows,
+    types: [...types.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
   };
 }
 

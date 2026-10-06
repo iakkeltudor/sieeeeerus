@@ -76,6 +76,19 @@ A red question is worth double, so enter it as 2 (e.g. `"ci": 2`). The site appl
 
 The league table ranks by points, then points per night, then most saves, then fewest lachealas. P is nights attended. Form covers the last 5 nights the person attended.
 
+## BeerTracker
+
+Each night can list who drank what:
+
+```json
+"beers": {
+  "Iakkel": { "Ursus": 3, "Guinness": 1 },
+  "Dragos": { "Ciuc Radler": 2 }
+}
+```
+
+Beer names are matched ignoring capitals and extra spaces, so `Ursus` and `ursus ` count as the same beer. The site shows the first spelling it finds. Only nights with a `beers` entry count towards the per-night averages, so a night you forgot to log doesn't pull them down.
+
 ## Starting a new season
 
 1. Create `data/season-5.json` containing `{ "season": 5, "players": [], "nights": [] }`.

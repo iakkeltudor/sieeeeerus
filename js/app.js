@@ -85,6 +85,7 @@ function render(season) {
   parts.push(summarySection(season));
   parts.push(gridSection(season));
   if (season.personal) parts.push(personalSection(season));
+  if (season.beers) parts.push(beerSection(season));
   if (season.attendance?.tracked) parts.push(attendanceSection(season));
   parts.push(`<section class="section two-up">
     <div class="panel chart" id="points-chart">
@@ -105,6 +106,7 @@ function render(season) {
 
   drawCharts(season);
   wireGrid(season);
+  wireBeers(season);
 }
 
 // Charts are drawn at their real pixel width so text stays readable on phones.
@@ -258,7 +260,14 @@ function detail(n, players, compact = false) {
   const who = Array.isArray(n.attendees)
     ? `<div><h4>Who went</h4><p>${n.attendees.map(esc).join(', ')}${n.guests ? `, plus ${n.guests} guest${n.guests === 1 ? '' : 's'}` : ''}</p></div>`
     : '';
-  const factsList = (facts.length ? `<div><h4>The night</h4><ul>${facts.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>` : '') + who;
+  const beerEntries = Object.entries(n.beers ?? {}).filter(([, d]) => d && Object.keys(d).length);
+  const beers = beerEntries.length
+    ? `<div><h4>Beers</h4><ul>${beerEntries.map(([name, d]) => {
+        const total = Object.values(d).reduce((a, c) => a + c, 0);
+        return `<li><span>${esc(name)} <span class="secondary small">${esc(Object.entries(d).map(([k, c]) => `${fmt(c)} ${k.trim()}`).join(', '))}</span></span><span class="num">${fmt(total)}</span></li>`;
+      }).join('')}</ul></div>`
+    : '';
+  const factsList = (facts.length ? `<div><h4>The night</h4><ul>${facts.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>` : '') + who + beers;
 
   if (n.afk) return `<div class="detail">${factsList}<div><h4>Score</h4><p>We used AFK, so this night scores the average of all our other nights: ${fmt(n.nightPoints)} on the night and ${fmt(n.generalPoints)} in the standings.</p></div></div>`;
   if (!n.hasRounds) return `<div class="detail">${factsList}<div><h4>Score</h4><p>Only the final total of ${fmt(n.nightPoints)} was recorded for this night, so there is no round breakdown.</p></div></div>`;
@@ -472,6 +481,80 @@ function nightPersonalTable(n, players) {
       <thead><tr><th></th>${ROUNDS.map((r) => `<th scope="col">R${r.n}</th>`).join('')}<th scope="col" class="r">Night</th><th></th></tr></thead>
       <tbody>${body}</tbody>
     </table></div></div>`;
+}
+
+// BeerTracker ------------------------------------------------------------
+const beerList = (beers, limit = Infinity) => {
+  const shown = beers.slice(0, limit).map((b) => `${esc(b.name)} ${fmt(b.count)}`);
+  if (beers.length > limit) shown.push(`+${beers.length - limit} more`);
+  return shown.join(', ');
+};
+
+const andList = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+// "Marc on Quiz 1", or "Iakkel, Marc and Muri on Quiz 1", or "Ana on Quiz 1 and Bogdan on Quiz 2".
+function recordText(holders) {
+  const nights = [...new Set(holders.map((h) => h.night))];
+  if (nights.length === 1) return `${andList(holders.map((h) => esc(h.player)))} on ${esc(nights[0])}`;
+  return andList(holders.map((h) => `${esc(h.player)} on ${esc(h.night)}`));
+}
+
+function beerSection(season) {
+  const b = season.beers;
+  const head = `<div class="section-head">
+      <h2>BeerTracker</h2>
+      <p>${b.nights ? `How many and what we drank, over ${b.nights} night${b.nights === 1 ? '' : 's'}.` : 'How many and what we drank.'}</p>
+    </div>`;
+  if (!b.nights) {
+    return `<section class="section">${head}<p class="secondary">No beers logged yet this season.</p></section>`;
+  }
+  const max = b.types[0]?.count ?? 0;
+  const board = b.rows.map((p) => `<tr>
+      <td class="rank num">${p.rank}</td>
+      <th scope="row" class="beer-name">${esc(p.name)}
+        <span class="beer-sub">${p.beers.length ? beerList(p.beers, 3) : '<span class="muted">Nothing logged</span>'}</span></th>
+      <td class="num pts">${fmt(p.total)}</td>
+      <td class="num c secondary">${p.perNight != null ? fmt(p.perNight, 1) : '–'}</td>
+    </tr>`).join('');
+  const bars = b.types.map((t, i) => `<li class="beer-bar" data-beer="${i}">
+      <span class="bb-name">${esc(t.name)}</span>
+      <span class="bb-track"><span class="bb-fill" style="width:${((t.count / max) * 100).toFixed(1)}%"></span></span>
+      <span class="bb-val num">${fmt(t.count)}</span>
+    </li>`).join('');
+  return `<section class="section">
+    ${head}
+    <dl class="figures beer-figures">
+      <div><dt>Beers this season</dt><dd>${fmt(b.total)}</dd></div>
+      <div><dt>Per night, whole team</dt><dd>${fmt(b.perNight, 1)}</dd></div>
+      ${b.record ? `<div><dt>Most in one night</dt><dd>${fmt(b.record.count)} <span class="dd-sub">${recordText(b.record.holders)}</span></dd></div>` : ''}
+    </dl>
+    <div class="two-up">
+      <div class="panel beer-board">
+        <table class="sheet league beer-table">
+          <thead><tr><th scope="col" class="rank">#</th><th scope="col">Player</th><th scope="col" class="pts">Beers</th><th scope="col" class="c" title="Per night attended">/night</th></tr></thead>
+          <tbody>${board}</tbody>
+        </table>
+      </div>
+      <div class="panel chart">
+        <h3>What we drink</h3>
+        <p class="sub">All beers this season, most popular first.</p>
+        <ol class="beer-bars">${bars}</ol>
+      </div>
+    </div>
+  </section>`;
+}
+
+function wireBeers(season) {
+  if (!season.beers?.nights) return;
+  app.querySelectorAll('.beer-bar').forEach((li) => {
+    const t = season.beers.types[li.dataset.beer];
+    const who = season.beers.rows
+      .map((p) => ({ name: p.name, count: p.beers.find((x) => x.name === t.name)?.count ?? 0 }))
+      .filter((p) => p.count)
+      .sort((a, b) => b.count - a.count);
+    bindTip(li, `<strong>${esc(t.name)}</strong>
+      ${who.map((p) => `<div class="row"><span>${esc(p.name)}</span><b>${fmt(p.count)}</b></div>`).join('')}`);
+  });
 }
 
 // Attendance -------------------------------------------------------------

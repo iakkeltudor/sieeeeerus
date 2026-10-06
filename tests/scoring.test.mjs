@@ -181,6 +181,56 @@ test('personal validation', () => {
   assert.match(validateNight(night({ 1: { Ana: { ci: -1 } } }), roster)[0], /must be a number of 0 or more/);
 });
 
+test('beer tracker: totals, per night, favourites, types and record', () => {
+  const s = scoreSeason({
+    season: 0,
+    players: ['Ana', 'Bogdan', 'Cris'],
+    nights: [
+      { id: 'Quiz 1', rounds: r10, attendees: ['Ana', 'Bogdan', 'Cris'], cheats: [],
+        beers: { Ana: { Ursus: 2, Guinness: 1 }, Bogdan: { ursus: 1 } } },
+      { id: 'Quiz 2', rounds: r10, attendees: ['Ana', 'Bogdan'], cheats: [],
+        beers: { Bogdan: { 'Ursus ': 3, Leffe: 1 } } },
+      { id: 'Quiz 3', rounds: r10, attendees: ['Ana', 'Bogdan', 'Cris'], cheats: [] }, // not logged
+    ],
+  });
+  const b = s.beers;
+  assert.equal(b.nights, 2);
+  assert.equal(b.total, 8);
+  assert.equal(b.perNight, 4);
+  assert.deepEqual(b.record, { count: 4, holders: [{ player: 'Bogdan', night: 'Quiz 2' }] });
+  assert.deepEqual(b.rows.map((r) => [r.rank, r.name, r.total, r.nightsLogged, r.perNight]),
+    [[1, 'Bogdan', 5, 2, 2.5], [2, 'Ana', 3, 2, 1.5], [3, 'Cris', 0, 1, 0]]);
+  // Names are matched ignoring case and spaces; the first spelling is kept.
+  assert.deepEqual(b.types, [{ name: 'Ursus', count: 6 }, { name: 'Guinness', count: 1 }, { name: 'Leffe', count: 1 }]);
+  assert.deepEqual(b.rows[0].favourite, { name: 'Ursus', count: 4 });
+  assert.deepEqual(b.rows[1].beers, [{ name: 'Ursus', count: 2 }, { name: 'Guinness', count: 1 }]);
+  assert.equal(b.rows[2].favourite, null);
+});
+
+test('beer record lists everyone tied for it', () => {
+  const s = scoreSeason({
+    season: 0,
+    players: ['Ana', 'Bogdan', 'Cris'],
+    nights: [
+      { id: 'Quiz 1', rounds: r10, attendees: ['Ana', 'Bogdan'], cheats: [], beers: { Ana: { Ursus: 3 }, Bogdan: { Ursus: 2 } } },
+      { id: 'Quiz 2', rounds: r10, attendees: ['Bogdan', 'Cris'], cheats: [], beers: { Bogdan: { Ursus: 3 }, Cris: { Leffe: 3 } } },
+    ],
+  });
+  assert.deepEqual(s.beers.record, { count: 3, holders: [
+    { player: 'Ana', night: 'Quiz 1' }, { player: 'Bogdan', night: 'Quiz 2' }, { player: 'Cris', night: 'Quiz 2' },
+  ] });
+});
+
+test('beer validation', () => {
+  const roster = ['Ana', 'Bogdan'];
+  const night = (beers) => ({ attendees: ['Ana'], beers, cheats: [] });
+  assert.deepEqual(validateNight(night({ Ana: { Ursus: 2 } }), roster), []);
+  assert.deepEqual(validateNight(night({ Bogdan: { Ursus: 1 } }), roster), ["beers: Bogdan has beers but isn't listed as attending"]);
+  assert.deepEqual(validateNight(night({ Zed: { Ursus: 1 } }), roster), ['beers: "Zed" is not in the season\'s players list']);
+  assert.deepEqual(validateNight(night({ Ana: { Ursus: 0 } }), roster), ["beers: Ana's Ursus count must be a number above 0"]);
+  assert.deepEqual(validateNight(night({ Ana: { ' ': 1 } }), roster), ['beers: Ana has a beer with no name']);
+});
+
 test('a season without a players list has no attendance', () => {
   assert.equal(s3.attendance, null);
 });
