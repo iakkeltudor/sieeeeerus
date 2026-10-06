@@ -111,6 +111,13 @@ test('season 4 quiz 1 totals 82.5', () => {
   for (const n of load('season-4.json').nights) assert.deepEqual(validateNight(n, load('season-4.json').players), [], n.id);
 });
 
+test('season 4 personal standings after quiz 1', () => {
+  const s4 = scoreSeason(load('season-4.json'));
+  const rows = s4.personal.rows.map((p) => [p.rank, p.name, p.points]);
+  // Dragos 9 CI; Iakkel 1 CI + 2 duels; Marc 1 + 1.5 - 1.5 ranks above Alin and Muri on safes.
+  assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
+});
+
 test('personal points: CI +1, safe +1.5, lacheala -1.5, duels +/-1', () => {
   assert.equal(personalPoints({ ci: 1 }), 1);
   assert.equal(personalPoints({ safe: 1 }), 1.5);
