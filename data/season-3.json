@@ -1,0 +1,117 @@
+{
+  "season": 3,
+  "nights": [
+    {
+      "id": "Quiz 1",
+      "date": null,
+      "theme": "Album covers / Childhood books",
+      "teamSize": null,
+      "place": 1,
+      "manualTotal": 84.75,
+      "rounds": null,
+      "topics": null,
+      "joker": null,
+      "cheats": []
+    },
+    {
+      "id": "Quiz 2",
+      "date": null,
+      "theme": "Deserturi / Gastronomie",
+      "teamSize": null,
+      "place": 5,
+      "manualTotal": 75.5,
+      "rounds": null,
+      "topics": null,
+      "joker": null,
+      "cheats": []
+    },
+    {
+      "id": "Quiz 3",
+      "date": null,
+      "theme": "Football",
+      "teamSize": 9,
+      "place": 1,
+      "rounds": [10, 11, 9, 10, 11, 11, 10, 11],
+      "topics": { "4": "Sport", "5": "Football", "7": "Football Songs" },
+      "joker": 5,
+      "cheats": ["reinforcements"]
+    },
+    {
+      "id": "Quiz 4",
+      "date": null,
+      "theme": "Geopolitics / Technology",
+      "teamSize": 6,
+      "place": 1,
+      "rounds": [9, 11, 10, 11, 8.5, 11, 10, 10.25],
+      "topics": { "4": "Geopolitics", "5": "Technology", "7": "Bolt Food" },
+      "joker": 4,
+      "cheats": ["tripleJoker"]
+    },
+    {
+      "id": "Quiz 5",
+      "date": null,
+      "theme": "Finish the lyric / Mythology",
+      "teamSize": 6,
+      "place": 3,
+      "rounds": [11, 9, 5, 11, 11, 10, 11, 10],
+      "topics": { "4": "Recognize the lyric", "5": "Mythology", "7": "Fit Check" },
+      "joker": 6,
+      "cheats": []
+    },
+    {
+      "id": "Quiz 6",
+      "date": null,
+      "theme": "Girls themed quiz night",
+      "teamSize": 8,
+      "place": 2,
+      "rounds": [9, 10, 9, 11, 11, 9, 11, 11],
+      "topics": { "4": "Girlhood & cosmetics", "5": "Girly songs", "7": "Princesses" },
+      "joker": 6,
+      "cheats": []
+    },
+    {
+      "id": "Quiz 7",
+      "date": null,
+      "theme": "Alcohol / Manele",
+      "teamSize": 6,
+      "place": 3,
+      "rounds": [8, 10, 8, 10, 9, 10.5, 7.5, 9.25],
+      "topics": { "4": "Alcohol", "5": "Manele", "7": "Medicine" },
+      "joker": 6,
+      "cheats": []
+    },
+    {
+      "id": "Quiz 8",
+      "date": null,
+      "theme": "Cars / Science",
+      "teamSize": 7,
+      "place": 1,
+      "rounds": [10, 10, 11, 10, 8, 10, 11, 11],
+      "topics": { "4": "Cars", "5": "Sciences", "7": "Chermeza Romaneasca" },
+      "joker": 6,
+      "cheats": ["noYou"]
+    },
+    {
+      "id": "Quiz 9",
+      "date": null,
+      "theme": null,
+      "teamSize": 6,
+      "place": 3,
+      "rounds": [9, 8, 9.5, 11, 8.5, 10, 9.5, 11],
+      "topics": { "4": "Flags & Capital Cities", "5": "Parties", "7": "Numele din buletin" },
+      "joker": 4,
+      "cheats": []
+    },
+    {
+      "id": "Quiz 10",
+      "date": null,
+      "theme": "Parfumuri / Logo",
+      "teamSize": 7,
+      "place": 2,
+      "rounds": [10, 10, 8, 7, 11, 10.65, 8.25, 9.75],
+      "topics": { "4": "Logo-uri", "5": "Parfumuri", "7": "Top 3" },
+      "joker": 5,
+      "cheats": []
+    }
+  ]
+}

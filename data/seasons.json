@@ -1,0 +1,8 @@
+{
+  "team": "Sieeeeerus",
+  "current": 4,
+  "seasons": [
+    { "season": 4, "file": "season-4.json", "status": "in progress" },
+    { "season": 3, "file": "season-3.json", "status": "finished" }
+  ]
+}
