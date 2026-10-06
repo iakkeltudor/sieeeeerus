@@ -20,6 +20,13 @@
         "6": { "Iakkel": { "duelWon": 1 } },
         "7": { "Dragos": { "ci": 2 } },
         "8": { "Dragos": { "ci": 1 }, "Muri": { "ci": 1 } }
+      },
+      "beers": {
+        "Iakkel": { "Birra": 5, "Ciuc": 1 },
+        "Dragos": { "Birra": 5, "Ciuc": 1 },
+        "Marc": { "Birra": 5, "Ciuc": 2 },
+        "Muri": { "Birra": 5, "Ciuc": 1 },
+        "Alin": { "Birra": 4, "Ciuc": 1, "Heineken": 1 }
       }
     }
   ]

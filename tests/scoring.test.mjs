@@ -120,6 +120,15 @@ test('season 4 personal standings after quiz 1', () => {
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
 });
 
+test('season 4 beers after quiz 1', () => {
+  const raw = load('season-4.json');
+  const b = scoreSeason({ ...raw, nights: raw.nights.filter((n) => n.id === 'Quiz 1') }).beers;
+  assert.equal(b.total, 31);
+  assert.deepEqual(b.record, { count: 7, holders: [{ player: 'Marc', night: 'Quiz 1' }] });
+  assert.deepEqual(b.types, [{ name: 'Birra', count: 24 }, { name: 'Ciuc', count: 6 }, { name: 'Heineken', count: 1 }]);
+  assert.deepEqual(b.rows.map((r) => [r.rank, r.name, r.total]), [[1, 'Marc', 7], [2, 'Iakkel', 6], [2, 'Dragos', 6], [2, 'Muri', 6], [2, 'Alin', 6]]);
+});
+
 test('personal points: CI +1, save +1.5, lacheala -1.5, duels +/-1', () => {
   assert.equal(personalPoints({ ci: 1 }), 1);
   assert.equal(personalPoints({ save: 1 }), 1.5);
