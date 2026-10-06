@@ -34,6 +34,19 @@ export const CHEATS = {
   },
 };
 
+// Personal standings categories. The values recorded are counts per round; a question worth
+// double (a "red" question) is already entered as 2, so no doubling happens here.
+export const PERSONAL = {
+  ci: { name: 'CI', long: 'Contributie individuala', points: 1, rule: 'Only this person knew the answer.' },
+  safe: { name: 'Safe', long: 'Safe', points: 1.5, rule: 'We were about to write a wrong answer and this person changed it to the right one at the last minute.' },
+  lacheala: { name: 'Lacheala', long: 'Lacheala', points: -1.5, rule: 'Confidently gave us a wrong answer.' },
+  duelWon: { name: 'Duel won', long: 'Duel won', points: 1, rule: 'Two of us disagreed, this person’s answer went down, and it was right.' },
+  duelLost: { name: 'Duel lost', long: 'Duel lost', points: -1, rule: 'Two of us disagreed, this person’s answer went down, and it was wrong.' },
+};
+
+export const personalPoints = (counts) =>
+  tidy(Object.entries(counts ?? {}).reduce((a, [cat, v]) => a + (PERSONAL[cat]?.points ?? 0) * v, 0));
+
 // Team-size deduction on the night (Rules & Assumptions sheet).
 export function teamSizeDeduction(size) {
   if (size == null) return 0;
@@ -70,10 +83,24 @@ export function validateNight(night, roster = null) {
   }
   for (const c of cheats) if (!(c in CHEATS)) problems.push(`unknown cheat "${c}"`);
   if (night.personal != null) {
-    for (const [name, pts] of Object.entries(night.personal)) {
-      if (roster && !roster.includes(name)) problems.push(`personal points for "${name}", who is not in the season's players list`);
-      else if (Array.isArray(night.attendees) && !night.attendees.includes(name)) problems.push(`personal points for ${name}, who isn't listed as attending`);
-      if (typeof pts !== 'number') problems.push(`personal points for ${name} must be a number`);
+    const reported = new Set();
+    for (const [round, people] of Object.entries(night.personal)) {
+      if (!/^[1-8]$/.test(round)) { problems.push(`personal: "${round}" is not a round number 1-8`); continue; }
+      for (const [name, counts] of Object.entries(people ?? {})) {
+        if (roster && !roster.includes(name)) {
+          if (!reported.has(name)) problems.push(`personal: "${name}" is not in the season's players list`);
+          reported.add(name);
+          continue;
+        }
+        if (Array.isArray(night.attendees) && !night.attendees.includes(name) && !reported.has(name)) {
+          problems.push(`personal: ${name} has points but isn't listed as attending`);
+          reported.add(name);
+        }
+        for (const [cat, v] of Object.entries(counts ?? {})) {
+          if (!(cat in PERSONAL)) problems.push(`personal round ${round}, ${name}: unknown category "${cat}" (use ${Object.keys(PERSONAL).join(', ')})`);
+          else if (typeof v !== 'number' || v < 0) problems.push(`personal round ${round}, ${name}: ${cat} must be a number of 0 or more`);
+        }
+      }
     }
   }
   if (night.rounds != null) {
@@ -162,23 +189,77 @@ export function scoreSeason(season) {
   };
 }
 
-// Personal standings. Placeholder rule until the real one is agreed: each night can give
-// people points in `personal: { "Name": points }`, and the standings add them up.
+// Personal standings ---------------------------------------------------------
+// night.personal = { "<round>": { "<player>": { ci, safe, lacheala, duelWon, duelLost } } }
+
+const hasPersonal = (n) => n.played && n.personal && Object.keys(n.personal).length > 0;
+const emptyCounts = () => Object.fromEntries(Object.keys(PERSONAL).map((k) => [k, 0]));
+const addCounts = (into, counts) => {
+  for (const [k, v] of Object.entries(counts ?? {})) if (k in into) into[k] += v;
+  return into;
+};
+
+// One player's counts for one night, by round and in total.
+export function nightPersonal(night, name) {
+  const byRound = {};
+  const total = emptyCounts();
+  for (const [round, people] of Object.entries(night.personal ?? {})) {
+    if (people?.[name]) {
+      byRound[round] = { counts: { ...people[name] }, points: personalPoints(people[name]) };
+      addCounts(total, people[name]);
+    }
+  }
+  return { byRound, counts: total, points: personalPoints(total) };
+}
+
+// Table order: points, then points per night, then most safes, then fewest lachealas.
+function compareRows(a, b) {
+  return b.points - a.points
+    || (b.perNight ?? 0) - (a.perNight ?? 0)
+    || b.counts.safe - a.counts.safe
+    || a.counts.lacheala - b.counts.lacheala;
+}
+
+function table(players, nights) {
+  const rows = players.map((name, order) => {
+    const attended = nights.filter((n) => Array.isArray(n.attendees) && n.attendees.includes(name));
+    const counts = emptyCounts();
+    const byRound = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((r) => [r, 0]));
+    const form = [];
+    for (const n of attended) {
+      const p = nightPersonal(n, name);
+      addCounts(counts, p.counts);
+      for (const [r, v] of Object.entries(p.byRound)) byRound[r] = tidy(byRound[r] + v.points);
+      if (hasPersonal(n)) form.push({ id: n.id, points: p.points });
+    }
+    const points = personalPoints(counts);
+    return {
+      name, order, counts, byRound, points,
+      played: attended.length,
+      perNight: attended.length ? tidy(points / attended.length) : null,
+      form: form.slice(-5),
+    };
+  });
+  rows.sort((a, b) => compareRows(a, b) || a.order - b.order);
+  rows.forEach((r, i) => {
+    r.rank = i > 0 && compareRows(r, rows[i - 1]) === 0 ? rows[i - 1].rank : i + 1;
+  });
+  return rows;
+}
+
 function personalStandings(players, nights) {
   if (!Array.isArray(players) || !players.length) return null;
-  const scoredNights = nights.filter((n) => n.played && n.personal && Object.keys(n.personal).length);
-  const rows = players.map((name, order) => {
-    const pts = scoredNights.filter((n) => name in n.personal).map((n) => n.personal[name]);
-    const attended = nights.filter((n) => n.played && Array.isArray(n.attendees) && n.attendees.includes(name)).length;
-    return { name, order, points: tidy(sum(pts)), scoredNights: pts.length, attended };
-  });
-  rows.sort((a, b) => b.points - a.points || b.attended - a.attended || a.order - b.order);
-  let rank = 0;
-  rows.forEach((r, i) => {
-    if (i === 0 || r.points !== rows[i - 1].points) rank = i + 1;
-    r.rank = rank;
-  });
-  return { nights: scoredNights.length, rows };
+  const played = nights.filter((n) => n.played);
+  const scored = played.filter(hasPersonal);
+  const rows = table(players, played);
+
+  // Movement since the previous night with personal points.
+  if (scored.length > 1) {
+    const before = table(players, played.slice(0, played.indexOf(scored[scored.length - 1])));
+    const prevRank = Object.fromEntries(before.map((r) => [r.name, r.played ? r.rank : null]));
+    for (const r of rows) r.move = prevRank[r.name] == null ? null : prevRank[r.name] - r.rank;
+  }
+  return { nights: scored.length, rows };
 }
 
 // Who went to which night. Only nights with an attendees list count towards the totals.

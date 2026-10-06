@@ -1,4 +1,4 @@
-import { ROUNDS, CHEATS, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction } from './scoring.js';
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js';
 import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js';
 
 const app = document.getElementById('app');
@@ -158,7 +158,7 @@ function jokerSentence(s) {
 // Scoresheet -------------------------------------------------------------
 function gridSection(season) {
   const head = ROUNDS.map((r) => `<th class="round" scope="col">R${r.n}<span>${r.weekly ? 'weekly' : esc(r.name)}</span></th>`).join('');
-  const rows = season.nights.map((n, i) => nightRow(n, i)).join('');
+  const rows = season.nights.map((n, i) => nightRow(n, i, season.players)).join('');
   const swatches = rampSwatches().map((c) => `<i style="background:${c}"></i>`).join('');
   return `<section class="section">
     <div class="section-head">
@@ -181,7 +181,7 @@ function gridSection(season) {
   </section>`;
 }
 
-function nightRow(n, i) {
+function nightRow(n, i, players) {
   const chips = n.cheats.map((c) => `<span class="chip">${esc(CHEATS[c].name)}</span>`).join('');
   let cells;
   if (n.afk) {
@@ -210,10 +210,10 @@ function nightRow(n, i) {
       <td class="total-cell"><b>${fmt(n.generalPoints)}</b>${boost > 0 ? `<span class="boost">${signed(boost)}</span>` : ''}</td>
       <td class="total-cell">${place}</td>
     </tr>
-    <tr class="detail-row" id="detail-${i}" hidden><td colspan="12">${detail(n)}</td></tr>`;
+    <tr class="detail-row" id="detail-${i}" hidden><td colspan="12">${detail(n, players)}</td></tr>`;
 }
 
-function detail(n) {
+function detail(n, players) {
   const facts = [
     n.date && ['Date', esc(n.date)],
     n.teamSize && ['Team size', n.teamSize],
@@ -247,6 +247,7 @@ function detail(n) {
     ${list('General standings', standingLines, n.generalPoints, 'Standings points')}
     <div><h4>Weekly topics</h4><ul>${topics.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>
     ${factsList}
+    ${nightPersonalTable(n, players)}
   </div>`;
 }
 
@@ -276,27 +277,128 @@ function wireGrid(season) {
 }
 
 // Personal standings -----------------------------------------------------
+const pointsText = (x) => (x > 0 ? `+${fmt(x)}` : x < 0 ? `−${fmt(-x)}` : '0');
+const countsText = (counts) => Object.entries(counts)
+  .filter(([, v]) => v)
+  .map(([k, v]) => `${PERSONAL[k].name} ${fmt(v)}`)
+  .join(', ');
+const scaleText = Object.values(PERSONAL).map((c) => `${c.name} ${pointsText(c.points)}`).join(', ');
+
+function moveCell(move) {
+  if (move == null) return '<td class="move"></td>';
+  if (move === 0) return '<td class="move"><span class="muted" aria-label="no change">–</span></td>';
+  const up = move > 0;
+  return `<td class="move"><span class="${up ? 'up' : 'down'}" aria-label="${up ? 'up' : 'down'} ${Math.abs(move)}">${up ? '▲' : '▼'}${Math.abs(move)}</span></td>`;
+}
+
+function formCell(form) {
+  if (!form.length) return '<td class="form"><span class="muted">–</span></td>';
+  return `<td class="form">${form.map((f) => {
+    const kind = f.points > 0 ? 'pos' : f.points < 0 ? 'neg' : 'zero';
+    const sym = f.points > 0 ? '+' : f.points < 0 ? '−' : '0';
+    return `<span class="form-chip ${kind}" title="${esc(f.id)}: ${pointsText(f.points)}" aria-label="${esc(f.id)} ${pointsText(f.points)}">${sym}</span>`;
+  }).join('')}</td>`;
+}
+
 function personalSection(season) {
   const { rows, nights } = season.personal;
   const started = nights > 0;
+  const dash = '<span class="muted">–</span>';
   const body = rows.map((p) => `<tr>
-      <td class="rank num">${started ? p.rank : '–'}</td>
+      <td class="rank num">${started ? p.rank : dash}</td>
+      ${started ? moveCell(p.move) : '<td class="move"></td>'}
       <th scope="row" class="att-name">${esc(p.name)}</th>
-      <td class="total-cell"><b>${started ? fmt(p.points) : '–'}</b></td>
-      <td class="total-cell">${p.attended}</td>
+      <td class="num c">${p.played}</td>
+      <td class="num c">${started ? fmt(p.counts.ci) : dash}</td>
+      <td class="num c">${started ? fmt(p.counts.safe) : dash}</td>
+      <td class="num c">${started ? fmt(p.counts.lacheala) : dash}</td>
+      <td class="num c">${started ? `${fmt(p.counts.duelWon)}-${fmt(p.counts.duelLost)}` : dash}</td>
+      ${formCell(p.form)}
+      <td class="num pts">${started ? fmt(p.points) : dash}</td>
+      <td class="num c secondary">${started && p.perNight != null ? fmt(p.perNight) : dash}</td>
     </tr>`).join('');
   return `<section class="section">
     <div class="section-head">
       <h2>Personal standings</h2>
-      <p>${started ? `After ${nights} scored night${nights === 1 ? '' : 's'}.` : 'Personal points haven’t been added yet.'}</p>
+      <p>${started
+        ? `After ${nights} night${nights === 1 ? '' : 's'} with personal points. ${scaleText}.`
+        : `No personal points recorded yet. ${scaleText}.`}</p>
     </div>
     <div class="panel sheet-scroll fit">
-      <table class="sheet attendance standings">
-        <thead><tr><th scope="col" class="rank">#</th><th scope="col" class="att-name">Player</th><th class="total" scope="col">Points</th><th class="total" scope="col">Nights</th></tr></thead>
+      <table class="sheet league">
+        <thead><tr>
+          <th scope="col" class="rank" title="Position">#</th>
+          <th scope="col" class="move"><span class="sr-only">Change since last night</span></th>
+          <th scope="col" class="att-name">Player</th>
+          <th scope="col" class="c" title="Nights attended">P</th>
+          <th scope="col" class="c" title="${esc(PERSONAL.ci.long)}">CI</th>
+          <th scope="col" class="c">Safe</th>
+          <th scope="col" class="c">Lach</th>
+          <th scope="col" class="c" title="Duels won-lost">Duels</th>
+          <th scope="col" class="form" title="Last 5 nights">Form</th>
+          <th scope="col" class="pts">Pts</th>
+          <th scope="col" class="c" title="Points per night attended">/night</th>
+        </tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  </section>${started ? byRoundSection(season) : ''}`;
+}
+
+// Players × rounds: who carries which round. Diverging tint: blue up, red down.
+function tint(v, max) {
+  if (!v || !max) return '';
+  const pct = Math.round(12 + 43 * Math.min(1, Math.abs(v) / max));
+  return `background: color-mix(in srgb, var(${v > 0 ? '--series-1' : '--neg'}) ${pct}%, transparent)`;
+}
+
+function byRoundSection(season) {
+  const rows = season.personal.rows.filter((p) => p.played);
+  const max = Math.max(...rows.flatMap((p) => Object.values(p.byRound).map(Math.abs)), 0);
+  const head = ROUNDS.map((r) => `<th class="round" scope="col">R${r.n}<span>${r.weekly ? 'weekly' : esc(r.name)}</span></th>`).join('');
+  const body = rows.map((p) => `<tr>
+      <th scope="row" class="att-name">${esc(p.name)}</th>
+      ${ROUNDS.map((r) => {
+        const v = p.byRound[r.n];
+        return `<td class="pcell num" style="${tint(v, max)}" title="${esc(p.name)}, round ${r.n}: ${pointsText(v)}">${v ? pointsText(v) : '<span class="muted">·</span>'}</td>`;
+      }).join('')}
+      <td class="total-cell"><b>${fmt(p.points)}</b></td>
+    </tr>`).join('');
+  return `<section class="section">
+    <div class="section-head">
+      <h2>Personal points by round</h2>
+      <p>Season totals for each round. Blue is a net gain, red a net loss.</p>
+    </div>
+    <div class="panel sheet-scroll fit">
+      <table class="sheet attendance byround">
+        <thead><tr><th scope="col" class="att-name">Player</th>${head}<th class="total" scope="col">Total</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>
   </section>`;
+}
+
+// One night's personal points, player by round, shown inside the night breakdown.
+function nightPersonalTable(n, players) {
+  if (!n.personal || !Object.keys(n.personal).length) return '';
+  const people = (players ?? []).filter((p) => n.attendees?.includes(p));
+  const rows = people.map((name) => ({ name, ...nightPersonal(n, name) }));
+  const max = Math.max(...rows.flatMap((p) => Object.values(p.byRound).map((x) => Math.abs(x.points))), 0);
+  const body = rows.map((p) => `<tr>
+      <th scope="row">${esc(p.name)}</th>
+      ${ROUNDS.map((r) => {
+        const cell = p.byRound[r.n];
+        if (!cell) return '<td class="pcell"><span class="muted">·</span></td>';
+        return `<td class="pcell num" style="${tint(cell.points, max)}" title="${esc(countsText(cell.counts))}">${pointsText(cell.points)}</td>`;
+      }).join('')}
+      <td class="total-cell"><b>${pointsText(p.points)}</b></td>
+      <td class="secondary small">${esc(countsText(p.counts)) || '–'}</td>
+    </tr>`).join('');
+  return `<div class="detail-wide"><h4>Personal points</h4>
+    <div class="sheet-scroll"><table class="mini">
+      <thead><tr><th></th>${ROUNDS.map((r) => `<th scope="col">R${r.n}</th>`).join('')}<th scope="col" class="r">Night</th><th></th></tr></thead>
+      <tbody>${body}</tbody>
+    </table></div></div>`;
 }
 
 // Attendance -------------------------------------------------------------
@@ -361,6 +463,8 @@ function renderRules() {
     ['Joker', 'One round a night is jokered and counts twice.'],
     ['Team size', `Teams of up to 6 lose nothing. Bigger teams lose points on the night (${ded}). Teams are capped at 10.`],
     ...Object.values(CHEATS).map((c) => [c.name, c.rule]),
+    ...Object.values(PERSONAL).map((c) => [`${c.long} (${pointsText(c.points)})`, `Personal standings. ${c.rule}`]),
+    ['Red questions', 'A red question is worth double, so a CI, safe or other entry on one counts as 2.'],
     ['Quiz-night vs standings', 'Quiz-night points are the score on the night. General standings points add the season cheats on top.'],
     ['Old nights', 'Some early nights only have a final total recorded. That total is used for both scores.'],
   ];

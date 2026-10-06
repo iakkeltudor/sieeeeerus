@@ -13,6 +13,10 @@
   --series-2: #eb6834;  /* standings after cheats */
   --joker: #c98500;
   --good: #006300;
+  --neg: #e34948;       /* diverging negative pole */
+  --good-fill: #0ca30c;
+  --bad-fill: #d03b3b;
+  --bad-text: #b52a2a;
 
   --display: "Bricolage Grotesque", system-ui, sans-serif;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -32,6 +36,8 @@
     --series-2: #d95926;
     --joker: #eda100;
     --good: #0ca30c;
+    --neg: #e66767;
+    --bad-text: #e66767;
   }
 }
 
@@ -167,7 +173,7 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 .place { font-weight: 700; }
 .place.first { display: inline-block; background: var(--ink); color: var(--surface); border-radius: 999px; padding: 1px 9px; }
 
-.detail-row td { padding: 4px 6px 16px; }
+.detail-row > td { padding: 4px 6px 16px; }
 .detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 32px; padding: 14px 16px; border-radius: 8px; background: var(--page); font-size: 0.92rem; }
 .detail h4 { margin: 0 0 6px; font-size: 0.9rem; }
 .detail ul { list-style: none; margin: 0; padding: 0; }
@@ -189,9 +195,43 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 .att-mark { display: inline-block; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--axis); vertical-align: middle; }
 .att-mark.went { background: var(--series-1); box-shadow: 0 0 0 2px var(--surface); }
 .attendance .total-cell { padding-left: 16px; color: var(--ink-2); }
-.standings .rank { width: 36px; text-align: center; color: var(--ink-2); padding-left: 10px; }
-.standings .att-name { position: static; }
-.standings td.total-cell b { color: var(--ink); }
+
+/* League table ------------------------------------------------------------ */
+.league { min-width: 0; width: auto; border-spacing: 0; }
+.league th, .league td { padding: 9px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+.league tbody tr:last-child > * { border-bottom: 0; }
+.league thead th { border-bottom: 1px solid var(--axis); }
+.league .c { text-align: center; }
+.league .rank { text-align: center; color: var(--ink-2); padding-right: 2px; }
+.league .move { width: 34px; padding-left: 2px; padding-right: 2px; font-size: 0.75rem; font-weight: 700; text-align: center; }
+.league .move .up { color: var(--good); }
+.league .move .down { color: var(--bad-text); }
+.league .att-name { position: sticky; left: 0; background: var(--surface); z-index: 1; font-weight: 600; padding-right: 20px; }
+.league .pts { text-align: right; font-weight: 800; font-size: 1.05rem; padding-left: 18px; }
+.league thead .pts { font-size: 0.82rem; }
+.form-chip {
+  display: inline-grid; place-items: center;
+  width: 18px; height: 18px; margin-right: 3px;
+  border-radius: 4px; font-size: 0.75rem; font-weight: 800; line-height: 1;
+}
+.form-chip.pos { background: var(--good-fill); color: #fff; }
+.form-chip.neg { background: var(--bad-fill); color: #fff; }
+.form-chip.zero { background: var(--grid); color: var(--ink-2); }
+
+.byround .pcell, .mini .pcell { text-align: center; border-radius: 4px; height: 36px; min-width: 52px; font-weight: 600; }
+.byround .att-name { min-width: 110px; }
+
+.detail-wide { grid-column: 1 / -1; }
+.mini { border-collapse: separate; border-spacing: 2px; font-size: 0.88rem; }
+.sheet .mini th, .sheet .mini td { vertical-align: middle; }
+.sheet .mini th { font-weight: 600; text-align: left; padding: 2px 8px 2px 0; color: var(--ink-2); }
+.sheet .mini thead th { text-align: center; font-size: 0.78rem; padding: 2px 0; }
+.sheet .mini thead th.r { text-align: right; padding-right: 10px; }
+.sheet .mini tbody th { color: var(--ink); min-width: 70px; }
+.mini .pcell { height: 30px; min-width: 44px; }
+.mini .total-cell { padding: 0 10px; }
+.small { font-size: 0.8rem; padding-left: 6px; white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Charts ----------------------------------------------------------------- */
 .chart { padding: 18px 18px 10px; }

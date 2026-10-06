@@ -54,13 +54,27 @@ When someone joins mid-season, add them to `players`. Earlier nights will show t
 
 ## Personal standings
 
-For now each night can give points to the people who were there, and the standings add them up:
+Record what each person did in each round, by round number. Leave out anyone who did nothing in a round:
 
 ```json
-"personal": { "Iakkel": 3, "Dragos": 1 }
+"personal": {
+  "1": { "Marc": { "ci": 1 }, "Muri": { "safe": 1 } },
+  "3": { "Alin": { "lacheala": 1 }, "Iakkel": { "duelWon": 1 } },
+  "8": { "Marc": { "duelLost": 1 } }
+}
 ```
 
-This is a placeholder until the real scoring rules are decided.
+| Key | Category | Points |
+|---|---|---|
+| `ci` | CI (contributie individuala): only this person knew the answer | +1 |
+| `safe` | Safe: changed a wrong answer to the right one at the last minute | +1.5 |
+| `lacheala` | Lacheala: confidently gave a wrong answer | −1.5 |
+| `duelWon` | Duel won: two people disagreed, their answer was written and it was right | +1 |
+| `duelLost` | Duel lost: their answer was written and it was wrong | −1 |
+
+A red question is worth double, so enter it as 2 (e.g. `"ci": 2`). The site applies the point values itself. To change them, edit `PERSONAL` in `js/scoring.js` and every night is re-scored.
+
+The league table ranks by points, then points per night, then most safes, then fewest lachealas. P is nights attended. Form covers the last 5 nights the person attended.
 
 ## Starting a new season
 
