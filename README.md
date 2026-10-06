@@ -13,7 +13,8 @@ Add an entry to the end of the `nights` list in `data/season-4.json`. You can do
   "id": "Quiz 1",
   "date": "2026-10-02",
   "theme": "Movies / Board games",
-  "teamSize": 7,
+  "attendees": ["Tudor", "Ana", "Bogdan", "Cris", "Diana", "Mihai"],
+  "guests": 1,
   "place": 2,
   "rounds": [10, 9, 11, 10, 8.5, 10, 9, 11],
   "topics": { "4": "Movies", "5": "Board games", "7": "Logos" },
@@ -27,7 +28,9 @@ Add an entry to the end of the `nights` list in `data/season-4.json`. You can do
 | `id` | Name shown on the site, e.g. `"Quiz 1"` or `"Grand Finale"` |
 | `date` | `"YYYY-MM-DD"`, or `null` |
 | `theme` | The night's theme, or `null` |
-| `teamSize` | 1-10. Teams of 7 or more lose points on the night (7: -1, 8: -3, 9: -6, 10: -10) |
+| `attendees` | Who went. Names must match the `players` list at the top of the file exactly, so typos get caught |
+| `guests` | Optional. People at the table who aren't on the players list |
+| `teamSize` | Optional when `attendees` is filled in: it's counted as attendees plus guests. Teams of 7 or more lose points on the night (7: -1, 8: -3, 9: -6, 10: -10) |
 | `place` | Final position on the night |
 | `rounds` | All 8 round scores in order, each 0-11. Decimals are fine |
 | `topics` | Topics for the weekly rounds 4, 5 and 7 |
@@ -39,9 +42,19 @@ For an AFK night, leave out `rounds` and set `"cheats": ["afk"]`. The night scor
 
 Remember the comma between nights. If an entry is wrong, the site shows a message saying which night and what to fix.
 
+## Players
+
+The top of each season file lists the team, which is what the "Who went" table is built from:
+
+```json
+{ "season": 4, "players": ["Tudor", "Ana", "Bogdan"], "nights": [ ... ] }
+```
+
+When someone joins mid-season, add them to `players`. Earlier nights will show them as not attending.
+
 ## Starting a new season
 
-1. Create `data/season-5.json` containing `{ "season": 5, "nights": [] }`.
+1. Create `data/season-5.json` containing `{ "season": 5, "players": [], "nights": [] }`.
 2. In `data/seasons.json`, add it at the top of the list, set `"current": 5`, and change the previous season's status to `"finished"`.
 
 ## Running it locally

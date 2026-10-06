@@ -48,9 +48,26 @@ const avg = (xs) => (xs.length ? sum(xs) / xs.length : null);
 // Round away float noise (e.g. 74.65000000000001) so totals print and compare cleanly.
 const tidy = (x) => (x == null ? null : Math.round(x * 1e6) / 1e6);
 
-export function validateNight(night) {
+// Team size counts everyone at the table: listed attendees plus any guests.
+export function teamSizeOf(night) {
+  if (night.teamSize != null) return night.teamSize;
+  if (Array.isArray(night.attendees)) return night.attendees.length + (night.guests ?? 0);
+  return null;
+}
+
+export function validateNight(night, roster = null) {
   const problems = [];
   const cheats = night.cheats ?? [];
+  if (night.attendees != null) {
+    if (!Array.isArray(night.attendees)) problems.push('attendees must be a list of names');
+    else {
+      if (roster) for (const p of night.attendees) if (!roster.includes(p)) problems.push(`"${p}" is not in the season's players list`);
+      const dupes = night.attendees.filter((p, i) => night.attendees.indexOf(p) !== i);
+      if (dupes.length) problems.push(`listed twice: ${[...new Set(dupes)].join(', ')}`);
+      const counted = night.attendees.length + (night.guests ?? 0);
+      if (night.teamSize != null && night.teamSize !== counted) problems.push(`team size is ${night.teamSize} but ${counted} people are listed`);
+    }
+  }
   for (const c of cheats) if (!(c in CHEATS)) problems.push(`unknown cheat "${c}"`);
   if (night.rounds != null) {
     if (!Array.isArray(night.rounds) || night.rounds.length !== 8) problems.push('rounds must list 8 scores');
@@ -59,13 +76,15 @@ export function validateNight(night) {
     });
   }
   if (night.joker != null && (night.joker < 1 || night.joker > 8)) problems.push('joker must be a round number 1-8');
-  if (night.teamSize != null && (night.teamSize < 1 || night.teamSize > MAX_TEAM_SIZE)) problems.push(`team size must be 1-${MAX_TEAM_SIZE}`);
+  const size = Array.isArray(night.attendees) || night.teamSize != null ? teamSizeOf(night) : null;
+  if (size != null && (size < 1 || size > MAX_TEAM_SIZE)) problems.push(`team size must be 1-${MAX_TEAM_SIZE}`);
   if (cheats.includes('tripleJoker') && night.joker == null) problems.push('triple joker needs a joker round');
   return problems;
 }
 
 // One night, before the AFK average is known (columns W-AF, AH-AJ).
-function scoreOne(night) {
+function scoreOne(input) {
+  const night = { ...input, teamSize: teamSizeOf(input) };
   const cheats = new Set(night.cheats ?? []);
   const afk = cheats.has('afk');
   const rounds = night.rounds ?? null;
@@ -126,7 +145,25 @@ export function scoreSeason(season) {
     }
     n.played = n.nightPoints != null;
   }
-  return { ...season, nights: scored, summary: summarise(scored), rounds: roundStats(scored) };
+  return {
+    ...season,
+    nights: scored,
+    summary: summarise(scored),
+    rounds: roundStats(scored),
+    attendance: attendance(season.players, scored),
+  };
+}
+
+// Who went to which night. Only nights with an attendees list count towards the totals.
+function attendance(players, nights) {
+  if (!Array.isArray(players) || !players.length) return null;
+  const tracked = nights.filter((n) => n.played && Array.isArray(n.attendees));
+  const rows = players.map((name, order) => {
+    const went = tracked.filter((n) => n.attendees.includes(name));
+    return { name, order, nights: went.map((n) => n.id), count: went.length, wins: went.filter((n) => n.place === 1).length };
+  });
+  rows.sort((a, b) => b.count - a.count || a.order - b.order);
+  return { tracked: tracked.length, rows };
 }
 
 function summarise(nights) {

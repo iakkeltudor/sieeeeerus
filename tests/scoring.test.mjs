@@ -74,6 +74,36 @@ test('validation catches bad input', () => {
   for (const n of load('season-3.json').nights) assert.deepEqual(validateNight(n), [], n.id);
 });
 
+test('attendance: team size comes from who went, and totals per player', () => {
+  const r = [10, 10, 10, 10, 10, 10, 10, 10];
+  const season = scoreSeason({
+    season: 0,
+    players: ['Ana', 'Bogdan', 'Cris'],
+    nights: [
+      { id: 'a', rounds: r, joker: 1, place: 1, attendees: ['Ana', 'Bogdan', 'Cris'], guests: 4, cheats: [] },
+      { id: 'b', rounds: r, joker: 1, place: 2, attendees: ['Ana', 'Cris'], cheats: [] },
+      { id: 'c', rounds: r, joker: 1, place: 3, teamSize: 5, cheats: [] },
+    ],
+  });
+  assert.equal(season.nights[0].teamSize, 7);
+  assert.equal(season.nights[0].deduction, 1);
+  assert.equal(season.nights[1].teamSize, 2);
+  assert.equal(season.attendance.tracked, 2);
+  assert.deepEqual(season.attendance.rows.map((p) => [p.name, p.count, p.wins]), [['Ana', 2, 1], ['Cris', 2, 1], ['Bogdan', 1, 1]]);
+});
+
+test('attendance validation catches typos and mismatched team size', () => {
+  const roster = ['Ana', 'Bogdan'];
+  assert.deepEqual(validateNight({ attendees: ['Ana', 'Bgdan'], cheats: [] }, roster), ['"Bgdan" is not in the season\'s players list']);
+  assert.deepEqual(validateNight({ attendees: ['Ana', 'Ana'], cheats: [] }, roster), ['listed twice: Ana']);
+  assert.deepEqual(validateNight({ attendees: ['Ana', 'Bogdan'], teamSize: 3, cheats: [] }, roster), ['team size is 3 but 2 people are listed']);
+  assert.deepEqual(validateNight({ attendees: ['Ana', 'Bogdan'], guests: 1, teamSize: 3, cheats: [] }, roster), []);
+});
+
+test('a season without a players list has no attendance', () => {
+  assert.equal(s3.attendance, null);
+});
+
 test('an empty season scores cleanly', () => {
   const s = scoreSeason(load('season-4.json'));
   assert.equal(s.summary.played, 0);

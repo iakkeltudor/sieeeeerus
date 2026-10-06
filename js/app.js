@@ -24,7 +24,7 @@ async function load() {
     index = await getJson('data/seasons.json');
     seasons = await Promise.all(index.seasons.map(async (meta) => {
       const raw = await getJson(`data/${meta.file}`);
-      const problems = raw.nights.flatMap((n, i) => validateNight(n).map((p) => `${n.id ?? `night ${i + 1}`}: ${p}`));
+      const problems = raw.nights.flatMap((n, i) => validateNight(n, raw.players?.length ? raw.players : null).map((p) => `${n.id ?? `night ${i + 1}`}: ${p}`));
       return { ...scoreSeason(raw), status: meta.status, file: meta.file, problems };
     }));
   } catch (err) {
@@ -84,6 +84,7 @@ function render(season) {
 
   parts.push(summarySection(season));
   parts.push(gridSection(season));
+  if (season.attendance?.tracked) parts.push(attendanceSection(season));
   parts.push(`<section class="section two-up">
     <div class="panel chart" id="points-chart">
       <h3>Points per night</h3>
@@ -217,7 +218,10 @@ function detail(n) {
     n.teamSize && ['Team size', n.teamSize],
     n.place && ['Place', ordinal(n.place)],
   ].filter(Boolean);
-  const factsList = facts.length ? `<div><h4>The night</h4><ul>${facts.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>` : '';
+  const who = Array.isArray(n.attendees)
+    ? `<div><h4>Who went</h4><p>${n.attendees.map(esc).join(', ')}${n.guests ? `, plus ${n.guests} guest${n.guests === 1 ? '' : 's'}` : ''}</p></div>`
+    : '';
+  const factsList = (facts.length ? `<div><h4>The night</h4><ul>${facts.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>` : '') + who;
 
   if (n.afk) return `<div class="detail">${factsList}<div><h4>Score</h4><p>We used AFK, so this night scores the average of all our other nights: ${fmt(n.nightPoints)} on the night and ${fmt(n.generalPoints)} in the standings.</p></div></div>`;
   if (!n.hasRounds) return `<div class="detail">${factsList}<div><h4>Score</h4><p>Only the final total of ${fmt(n.nightPoints)} was recorded for this night, so there is no round breakdown.</p></div></div>`;
@@ -268,6 +272,34 @@ function wireGrid(season) {
       <div class="row"><span>Score</span><b>${fmt(s)} of ${MAX_ROUND_SCORE}</b></div>
       ${notes.map((x) => `<div>${x}</div>`).join('')}`);
   });
+}
+
+// Attendance -------------------------------------------------------------
+function attendanceSection(season) {
+  const nights = season.nights.filter((n) => n.played);
+  const { rows, tracked } = season.attendance;
+  const head = nights.map((n) => `<th scope="col" class="att-night" title="${esc(n.theme ?? n.id)}">${esc(shortId(n.id))}</th>`).join('');
+  const body = rows.map((p) => {
+    const cells = nights.map((n) => {
+      if (!Array.isArray(n.attendees)) return '<td class="att"><span class="muted" title="Not recorded">–</span></td>';
+      const went = n.attendees.includes(p.name);
+      return `<td class="att"><span class="att-mark${went ? ' went' : ''}" role="img" aria-label="${went ? 'went' : 'missed'}" title="${esc(p.name)} ${went ? 'went to' : 'missed'} ${esc(n.id)}"></span></td>`;
+    }).join('');
+    return `<tr><th scope="row" class="att-name">${esc(p.name)}</th>${cells}<td class="total-cell">${p.count} of ${tracked}</td></tr>`;
+  }).join('');
+  const guests = nights.reduce((a, n) => a + (n.guests ?? 0), 0);
+  return `<section class="section">
+    <div class="section-head">
+      <h2>Who went</h2>
+      <p>Not all of us make every quiz.${guests ? ` Guests came along ${guests} time${guests === 1 ? '' : 's'} this season.` : ''}</p>
+    </div>
+    <div class="panel sheet-scroll fit">
+      <table class="sheet attendance">
+        <thead><tr><th scope="col" class="att-name">Player</th>${head}<th class="total" scope="col">Nights</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  </section>`;
 }
 
 // Cheats -----------------------------------------------------------------

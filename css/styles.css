@@ -179,6 +179,17 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 .ramp i { width: 18px; height: 12px; border-radius: 2px; display: block; }
 .key-joker { display: inline-grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: var(--joker); color: #13233a; font-size: 0.68rem; font-weight: 800; margin-right: 6px; vertical-align: middle; }
 
+/* Attendance ------------------------------------------------------------- */
+.panel.fit { width: fit-content; max-width: 100%; }
+.sheet.attendance { min-width: 0; width: auto; }
+.attendance .att-name { position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 120px; padding: 6px 16px 6px 10px; font-weight: 600; }
+.attendance thead .att-name { font-weight: 600; }
+.attendance .att-night { text-align: center; width: 40px; min-width: 40px; }
+.attendance .att { text-align: center; height: 36px; }
+.att-mark { display: inline-block; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--axis); vertical-align: middle; }
+.att-mark.went { background: var(--series-1); box-shadow: 0 0 0 2px var(--surface); }
+.attendance .total-cell { padding-left: 16px; color: var(--ink-2); }
+
 /* Charts ----------------------------------------------------------------- */
 .chart { padding: 18px 18px 10px; }
 .chart h3 { margin-bottom: 4px; }
