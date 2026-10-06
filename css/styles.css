@@ -287,6 +287,96 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
   .cheat + .cheat { border-top: 1px solid var(--grid); }
 }
 
+/* Phone layouts ---------------------------------------------------------- */
+.mob-only { display: none; }
+@media (max-width: 720px) {
+  .desk-only { display: none; }
+  .mob-only { display: block; }
+
+  .masthead { padding: 32px 0 20px; }
+  .tagline { margin-top: 8px; font-size: 1rem; }
+  .seasons { margin-top: 18px; }
+  .section { padding: 28px 0; }
+  .section-head { margin-bottom: 14px; }
+  .section-head p { font-size: 0.92rem; }
+  h2 { font-size: 1.4rem; }
+
+  .summary { gap: 18px; padding-bottom: 28px; }
+  .figures { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+  .figures dd { font-size: 1.35rem; }
+
+  /* Night cards */
+  .night-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .night-card { background: var(--surface); border-radius: var(--radius); box-shadow: 0 0 0 1px var(--ring); padding: 14px 14px 4px; }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .card-head strong { display: block; font-size: 1.05rem; }
+  .card-head .theme { color: var(--ink-2); font-size: 0.88rem; }
+  .card-head .place { flex: none; }
+  .night-card .chips { margin-top: 6px; }
+  .card-rounds { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .card-rounds .score { height: 52px; display: grid; place-items: center; font-size: 1.05rem; padding-top: 8px; }
+  .card-rounds .rn { position: absolute; top: 4px; left: 6px; font-size: 0.66rem; font-weight: 600; opacity: 0.75; }
+  .card-note { margin-top: 12px; padding: 14px; font-size: 0.85rem; }
+  .card-totals { display: flex; gap: 28px; margin: 12px 0 0; }
+  .card-totals dt { color: var(--ink-2); font-size: 0.8rem; }
+  .card-totals dd { margin: 0; font-size: 1.15rem; font-weight: 700; }
+  .card-totals .boost { color: var(--good); font-size: 0.85rem; font-weight: 600; }
+  .card-toggle {
+    all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding: 12px 0; border-top: 1px solid var(--grid);
+    color: var(--series-1); font-weight: 600; font-size: 0.92rem;
+  }
+  .card-toggle:focus-visible { outline: 2px solid var(--series-1); outline-offset: -2px; }
+  .card-toggle .chev { display: inline-block; transition: transform 160ms; font-size: 1.2rem; }
+  .card-toggle[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  .card-toggle .when-open, .card-toggle[aria-expanded="true"] .when-closed { display: none; }
+  .card-toggle[aria-expanded="true"] .when-open { display: inline; }
+  .card-detail { padding-bottom: 12px; }
+  .card-detail .detail { grid-template-columns: 1fr; padding: 12px; gap: 14px; }
+  .legend-row { padding: 0; }
+
+  /* Personal points list inside a card */
+  .plist { list-style: none; margin: 0; padding: 0; }
+  .plist li { display: grid; grid-template-columns: 1fr auto; gap: 0 12px; padding: 6px 0; border-top: 1px solid var(--grid); }
+  .plist li:first-child { border-top: 0; }
+  .plist .pl-name { font-weight: 600; }
+  .plist .pl-sub { grid-column: 1 / -1; font-size: 0.82rem; }
+
+  /* League rows */
+  .league-cards { list-style: none; margin: 0; padding: 4px 14px; }
+  .league-card {
+    display: grid;
+    grid-template-columns: 22px 30px 1fr auto;
+    grid-template-areas: "rank move name pts" ". . stats stats" ". . form form";
+    align-items: center; gap: 2px 6px;
+    padding: 12px 0; border-top: 1px solid var(--grid);
+  }
+  .league-card:first-child { border-top: 0; }
+  .lc-rank { grid-area: rank; color: var(--ink-2); font-weight: 600; }
+  .lc-move { grid-area: move; font-size: 0.75rem; font-weight: 700; }
+  .lc-move .up { color: var(--good); }
+  .lc-move .down { color: var(--bad-text); }
+  .lc-name { grid-area: name; font-weight: 700; font-size: 1.05rem; }
+  .lc-pts { grid-area: pts; font-weight: 800; font-size: 1.3rem; text-align: right; }
+  .lc-pts small { font-size: 0.72rem; font-weight: 500; color: var(--ink-2); margin-left: 3px; }
+  .lc-stats { grid-area: stats; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+  .lc-form { grid-area: form; display: flex; align-items: center; gap: 0; margin-top: 4px; font-size: 0.8rem; }
+  .lc-form .muted { margin-left: 8px; }
+
+  /* By-round table fits the screen width */
+  .panel.fit { width: 100%; }
+  .byround { border-spacing: 2px; width: 100%; table-layout: fixed; }
+  .byround thead th.att-name { width: 21%; }
+  .byround thead th.round { width: 8.75%; padding: 6px 0; text-align: center; }
+  .byround thead th.total { width: 9%; text-align: right; padding-right: 6px; }
+  .byround thead th.round span { display: none; }
+  .byround .att-name { min-width: 0; padding: 6px 6px 6px 8px; font-size: 0.9rem; }
+  .byround .pcell { min-width: 0; height: 32px; font-size: 0.78rem; padding: 0; }
+  .byround .total-cell { padding: 0 8px 0 4px; }
+  .attendance .att-name { min-width: 0; padding-right: 10px; }
+}
+
 /* Empty and error states ------------------------------------------------- */
 .empty { padding: 32px 0 40px; max-width: 60ch; }
 .empty h2 { margin-bottom: 8px; }

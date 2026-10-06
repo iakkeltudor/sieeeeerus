@@ -165,7 +165,7 @@ function gridSection(season) {
       <h2>Night by night</h2>
       <p>Each square is one round, scored out of ${MAX_ROUND_SCORE}. Select a night to see how its total was worked out.</p>
     </div>
-    <div class="panel sheet-scroll">
+    <div class="panel sheet-scroll desk-only">
       <table class="sheet">
         <thead><tr>
           <th scope="col" class="night-cell">Night</th>${head}
@@ -174,6 +174,7 @@ function gridSection(season) {
         <tbody>${rows}</tbody>
       </table>
     </div>
+    <ol class="night-cards mob-only">${season.nights.map((n, i) => nightCard(n, i, season.players)).join('')}</ol>
     <div class="legend-row">
       <span>5 or less<span class="ramp" aria-hidden="true">${swatches}</span>11</span>
       <span><span class="key-joker" aria-hidden="true">J</span>joker round, counted twice</span>
@@ -213,7 +214,42 @@ function nightRow(n, i, players) {
     <tr class="detail-row" id="detail-${i}" hidden><td colspan="12">${detail(n, players)}</td></tr>`;
 }
 
-function detail(n, players) {
+// Phone layout: one card per night, rounds as a 4×2 grid so nothing scrolls sideways.
+function nightCard(n, i, players) {
+  const chips = n.cheats.map((c) => `<span class="chip">${esc(CHEATS[c].name)}</span>`).join('');
+  let squares;
+  if (n.afk) squares = '<p class="no-rounds card-note">Skipped with AFK, scored the season average</p>';
+  else if (!n.hasRounds) squares = '<p class="no-rounds card-note">Only the final total was recorded</p>';
+  else {
+    squares = `<ol class="card-rounds">${n.rounds.map((s, r) => {
+      const { bg, fg } = scoreColor(s);
+      const joker = n.joker === r + 1;
+      return `<li class="score${joker ? ' joker' : ''}" style="background:${bg};color:${fg}" aria-label="Round ${r + 1}: ${fmt(s)}${joker ? ', joker' : ''}">
+          <span class="rn">R${r + 1}</span>${fmt(s)}</li>`;
+    }).join('')}</ol>`;
+  }
+  const boost = n.generalPoints - n.nightPoints;
+  const place = n.place ? `<span class="place${n.place === 1 ? ' first' : ''}">${ordinal(n.place)}</span>` : '';
+  return `<li class="night-card">
+      <div class="card-head">
+        <div><strong>${esc(n.id)}</strong>
+          <span class="theme">${n.theme ? esc(n.theme) : '<span class="muted">Theme not recorded</span>'}</span></div>
+        ${place}
+      </div>
+      ${chips ? `<div class="chips">${chips}</div>` : ''}
+      ${squares}
+      <dl class="card-totals">
+        <div><dt>Quiz night</dt><dd>${fmt(n.nightPoints)}</dd></div>
+        <div><dt>Standings</dt><dd>${fmt(n.generalPoints)}${boost > 0 ? ` <span class="boost">${signed(boost)}</span>` : ''}</dd></div>
+      </dl>
+      <button type="button" class="night-btn card-toggle" aria-expanded="false" aria-controls="mdetail-${i}">
+        <span class="when-closed">Show details</span><span class="when-open">Hide details</span><span class="chev" aria-hidden="true">›</span>
+      </button>
+      <div id="mdetail-${i}" class="card-detail" hidden>${detail(n, players, true)}</div>
+    </li>`;
+}
+
+function detail(n, players, compact = false) {
   const facts = [
     n.date && ['Date', esc(n.date)],
     n.teamSize && ['Team size', n.teamSize],
@@ -247,13 +283,13 @@ function detail(n, players) {
     ${list('General standings', standingLines, n.generalPoints, 'Standings points')}
     <div><h4>Weekly topics</h4><ul>${topics.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>
     ${factsList}
-    ${nightPersonalTable(n, players)}
+    ${compact ? nightPersonalList(n, players) : nightPersonalTable(n, players)}
   </div>`;
 }
 
 function wireGrid(season) {
   app.querySelectorAll('.night-btn').forEach((btn) => btn.addEventListener('click', () => {
-    const row = btn.closest('tr');
+    const row = btn.closest('tr, .night-card');
     const open = btn.getAttribute('aria-expanded') !== 'true';
     btn.setAttribute('aria-expanded', open);
     row.classList.toggle('open', open);
@@ -284,20 +320,45 @@ const countsText = (counts) => Object.entries(counts)
   .join(', ');
 const scaleText = Object.values(PERSONAL).map((c) => `${c.name} ${pointsText(c.points)}`).join(', ');
 
-function moveCell(move) {
-  if (move == null) return '<td class="move"></td>';
-  if (move === 0) return '<td class="move"><span class="muted" aria-label="no change">–</span></td>';
+function moveMark(move) {
+  if (move == null) return '';
+  if (move === 0) return '<span class="muted" aria-label="no change">–</span>';
   const up = move > 0;
-  return `<td class="move"><span class="${up ? 'up' : 'down'}" aria-label="${up ? 'up' : 'down'} ${Math.abs(move)}">${up ? '▲' : '▼'}${Math.abs(move)}</span></td>`;
+  return `<span class="${up ? 'up' : 'down'}" aria-label="${up ? 'up' : 'down'} ${Math.abs(move)}">${up ? '▲' : '▼'}${Math.abs(move)}</span>`;
 }
+const moveCell = (move) => `<td class="move">${moveMark(move)}</td>`;
 
-function formCell(form) {
-  if (!form.length) return '<td class="form"><span class="muted">–</span></td>';
-  return `<td class="form">${form.map((f) => {
+function formMarks(form) {
+  if (!form.length) return '<span class="muted">–</span>';
+  return form.map((f) => {
     const kind = f.points > 0 ? 'pos' : f.points < 0 ? 'neg' : 'zero';
     const sym = f.points > 0 ? '+' : f.points < 0 ? '−' : '0';
     return `<span class="form-chip ${kind}" title="${esc(f.id)}: ${pointsText(f.points)}" aria-label="${esc(f.id)} ${pointsText(f.points)}">${sym}</span>`;
-  }).join('')}</td>`;
+  }).join('');
+}
+const formCell = (form) => `<td class="form">${formMarks(form)}</td>`;
+
+// Phone layout for one league row: position, name and points up top, the breakdown below.
+function leagueCard(p, started) {
+  const move = started ? moveMark(p.move) : '';
+  const form = formMarks(p.form);
+  const stat = (label, value) => `<span><span class="muted">${label}</span> ${value}</span>`;
+  return `<li class="league-card">
+      <span class="lc-rank num">${started ? p.rank : '–'}</span>
+      <span class="lc-move">${move}</span>
+      <span class="lc-name">${esc(p.name)}</span>
+      <span class="lc-pts num">${started ? fmt(p.points) : '–'}<small>pts</small></span>
+      <span class="lc-stats">
+        ${stat('P', p.played)}
+        ${started ? [
+          stat('CI', fmt(p.counts.ci)),
+          stat('Safe', fmt(p.counts.safe)),
+          stat('Lach', fmt(p.counts.lacheala)),
+          stat('Duels', `${fmt(p.counts.duelWon)}-${fmt(p.counts.duelLost)}`),
+        ].join('') : ''}
+      </span>
+      ${started ? `<span class="lc-form">${form}${p.perNight != null ? `<span class="muted">${fmt(p.perNight)} per night</span>` : ''}</span>` : ''}
+    </li>`;
 }
 
 function personalSection(season) {
@@ -324,7 +385,8 @@ function personalSection(season) {
         ? `After ${nights} night${nights === 1 ? '' : 's'} with personal points. ${scaleText}.`
         : `No personal points recorded yet. ${scaleText}.`}</p>
     </div>
-    <div class="panel sheet-scroll fit">
+    <ol class="league-cards panel mob-only">${rows.map((p) => leagueCard(p, started)).join('')}</ol>
+    <div class="panel sheet-scroll fit desk-only">
       <table class="sheet league">
         <thead><tr>
           <th scope="col" class="rank" title="Position">#</th>
@@ -376,6 +438,17 @@ function byRoundSection(season) {
       </table>
     </div>
   </section>`;
+}
+
+// Phone version of the night's personal points: one line per player.
+function nightPersonalList(n, players) {
+  if (!n.personal || !Object.keys(n.personal).length) return '';
+  const rows = (players ?? []).filter((p) => n.attendees?.includes(p)).map((name) => ({ name, ...nightPersonal(n, name) }));
+  return `<div class="detail-wide"><h4>Personal points</h4><ul class="plist">${rows.map((p) => {
+    const rounds = Object.entries(p.byRound).map(([r, c]) => `R${r} ${pointsText(c.points)}`).join(', ');
+    return `<li><span class="pl-name">${esc(p.name)}</span><b class="num">${pointsText(p.points)}</b>
+      <span class="pl-sub secondary">${rounds ? `${esc(countsText(p.counts))} (${rounds})` : 'Nothing this night'}</span></li>`;
+  }).join('')}</ul></div>`;
 }
 
 // One night's personal points, player by round, shown inside the night breakdown.

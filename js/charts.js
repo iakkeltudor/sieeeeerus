@@ -33,12 +33,31 @@ export function showTip(html, x, y) {
 
 export function hideTip() {
   tip().hidden = true;
+  tipOwner = null;
 }
 
+// Mouse: follow the pointer. Touch and pen: a tap opens the tooltip and the next tap
+// anywhere else (or a scroll) closes it, instead of it flashing for a split second.
+let tipOwner = null;
 export function bindTip(node, html) {
-  node.addEventListener('pointermove', (e) => showTip(typeof html === 'function' ? html() : html, e.clientX, e.clientY));
-  node.addEventListener('pointerleave', hideTip);
+  const content = () => (typeof html === 'function' ? html() : html);
+  node.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'mouse') showTip(content(), e.clientX, e.clientY);
+  });
+  node.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') hideTip();
+  });
+  node.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse') return;
+    if (tipOwner === node && !tip().hidden) { hideTip(); return; }
+    tipOwner = node;
+    showTip(content(), e.clientX, e.clientY);
+  });
 }
+document.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse' && tipOwner && !tipOwner.contains(e.target)) hideTip();
+}, true);
+window.addEventListener('scroll', () => hideTip(), { passive: true });
 
 function niceTicks(lo, hi) {
   const step = hi - lo > 30 ? 10 : 5;
