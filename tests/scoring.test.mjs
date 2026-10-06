@@ -112,7 +112,9 @@ test('season 4 quiz 1 totals 82.5', () => {
 });
 
 test('season 4 personal standings after quiz 1', () => {
-  const s4 = scoreSeason(load('season-4.json'));
+  // Only Quiz 1, so this keeps passing as later nights are added to the file.
+  const raw = load('season-4.json');
+  const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => n.id === 'Quiz 1') });
   const rows = s4.personal.rows.map((p) => [p.rank, p.name, p.points]);
   // Dragos 9 CI; Iakkel 1 CI + 2 duels; Marc 1 + 1.5 - 1.5 ranks above Alin and Muri on safes.
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
