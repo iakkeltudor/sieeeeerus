@@ -38,7 +38,7 @@ export const CHEATS = {
 // double (a "red" question) is already entered as 2, so no doubling happens here.
 export const PERSONAL = {
   ci: { name: 'CI', long: 'Contributie individuala', points: 1, rule: 'Only this person knew the answer.' },
-  safe: { name: 'Safe', long: 'Safe', points: 1.5, rule: 'We were about to write a wrong answer and this person changed it to the right one at the last minute.' },
+  save: { name: 'Save', long: 'Save', points: 1.5, rule: 'We were about to write a wrong answer and this person changed it to the right one at the last minute.' },
   lacheala: { name: 'Lacheala', long: 'Lacheala', points: -1.5, rule: 'Confidently gave us a wrong answer.' },
   duelWon: { name: 'Duel won', long: 'Duel won', points: 1, rule: 'Two of us disagreed, this person’s answer went down, and it was right.' },
   duelLost: { name: 'Duel lost', long: 'Duel lost', points: -1, rule: 'Two of us disagreed, this person’s answer went down, and it was wrong.' },
@@ -190,7 +190,7 @@ export function scoreSeason(season) {
 }
 
 // Personal standings ---------------------------------------------------------
-// night.personal = { "<round>": { "<player>": { ci, safe, lacheala, duelWon, duelLost } } }
+// night.personal = { "<round>": { "<player>": { ci, save, lacheala, duelWon, duelLost } } }
 
 const hasPersonal = (n) => n.played && n.personal && Object.keys(n.personal).length > 0;
 const emptyCounts = () => Object.fromEntries(Object.keys(PERSONAL).map((k) => [k, 0]));
@@ -212,11 +212,11 @@ export function nightPersonal(night, name) {
   return { byRound, counts: total, points: personalPoints(total) };
 }
 
-// Table order: points, then points per night, then most safes, then fewest lachealas.
+// Table order: points, then points per night, then most saves, then fewest lachealas.
 function compareRows(a, b) {
   return b.points - a.points
     || (b.perNight ?? 0) - (a.perNight ?? 0)
-    || b.counts.safe - a.counts.safe
+    || b.counts.save - a.counts.save
     || a.counts.lacheala - b.counts.lacheala;
 }
 

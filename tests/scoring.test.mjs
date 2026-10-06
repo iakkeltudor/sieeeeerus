@@ -116,16 +116,16 @@ test('season 4 personal standings after quiz 1', () => {
   const raw = load('season-4.json');
   const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => n.id === 'Quiz 1') });
   const rows = s4.personal.rows.map((p) => [p.rank, p.name, p.points]);
-  // Dragos 9 CI; Iakkel 1 CI + 2 duels; Marc 1 + 1.5 - 1.5 ranks above Alin and Muri on safes.
+  // Dragos 9 CI; Iakkel 1 CI + 2 duels; Marc 1 + 1.5 - 1.5 ranks above Alin and Muri on saves.
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
 });
 
-test('personal points: CI +1, safe +1.5, lacheala -1.5, duels +/-1', () => {
+test('personal points: CI +1, save +1.5, lacheala -1.5, duels +/-1', () => {
   assert.equal(personalPoints({ ci: 1 }), 1);
-  assert.equal(personalPoints({ safe: 1 }), 1.5);
+  assert.equal(personalPoints({ save: 1 }), 1.5);
   assert.equal(personalPoints({ lacheala: 1 }), -1.5);
   assert.equal(personalPoints({ duelWon: 1, duelLost: 1 }), 0);
-  assert.equal(personalPoints({ ci: 2, safe: 1, lacheala: 1, duelWon: 2, duelLost: 1 }), 3);
+  assert.equal(personalPoints({ ci: 2, save: 1, lacheala: 1, duelWon: 2, duelLost: 1 }), 3);
 });
 
 const r10 = [10, 10, 10, 10, 10, 10, 10, 10];
@@ -134,7 +134,7 @@ const league = () => scoreSeason({
   players: ['Ana', 'Bogdan', 'Cris'],
   nights: [
     { id: 'Quiz 1', rounds: r10, attendees: ['Ana', 'Bogdan', 'Cris'], cheats: [],
-      personal: { 1: { Ana: { ci: 1 }, Bogdan: { safe: 1 } }, 4: { Ana: { ci: 1 }, Cris: { lacheala: 1 } } } },
+      personal: { 1: { Ana: { ci: 1 }, Bogdan: { save: 1 } }, 4: { Ana: { ci: 1 }, Cris: { lacheala: 1 } } } },
     { id: 'Quiz 2', rounds: r10, attendees: ['Ana', 'Bogdan'], cheats: [],
       personal: { 2: { Bogdan: { ci: 2, duelWon: 1 } }, 8: { Ana: { duelLost: 1 } } } },
   ],
@@ -148,7 +148,7 @@ test('league table: totals, per night, by round, form and movement', () => {
   assert.equal(rows.Bogdan.played, 2);
   assert.equal(rows.Bogdan.perNight, 2.25);
   assert.equal(rows.Cris.played, 1);
-  assert.deepEqual(rows.Bogdan.counts, { ci: 2, safe: 1, lacheala: 0, duelWon: 1, duelLost: 0 });
+  assert.deepEqual(rows.Bogdan.counts, { ci: 2, save: 1, lacheala: 0, duelWon: 1, duelLost: 0 });
   assert.deepEqual(rows.Ana.byRound, { 1: 1, 2: 0, 3: 0, 4: 1, 5: 0, 6: 0, 7: 0, 8: -1 });
   assert.deepEqual(rows.Ana.form.map((f) => f.points), [2, -1]);
   // After Quiz 1 Ana led (2) ahead of Bogdan (1.5); after Quiz 2 Bogdan is top.
@@ -157,16 +157,16 @@ test('league table: totals, per night, by round, form and movement', () => {
   assert.equal(rows.Cris.move, 0);
 });
 
-test('league table tiebreakers: points per night, then safes, then fewer lachealas', () => {
+test('league table tiebreakers: points per night, then saves, then fewer lachealas', () => {
   const s = scoreSeason({
     season: 0,
     players: ['A', 'B', 'C', 'D'],
     nights: [
-      { id: '1', rounds: r10, attendees: ['A', 'B', 'C', 'D'], cheats: [], personal: { 1: { A: { ci: 3 }, B: { safe: 2 }, C: { ci: 3 }, D: { ci: 3 } } } },
-      { id: '2', rounds: r10, attendees: ['A', 'C', 'D'], cheats: [], personal: { 1: { C: { safe: 2, lacheala: 2 } }, 2: { D: { safe: 2, lacheala: 2 } } } },
+      { id: '1', rounds: r10, attendees: ['A', 'B', 'C', 'D'], cheats: [], personal: { 1: { A: { ci: 3 }, B: { save: 2 }, C: { ci: 3 }, D: { ci: 3 } } } },
+      { id: '2', rounds: r10, attendees: ['A', 'C', 'D'], cheats: [], personal: { 1: { C: { save: 2, lacheala: 2 } }, 2: { D: { save: 2, lacheala: 2 } } } },
     ],
   });
-  // B: 3 pts in 1 night. A, C, D: 3 pts in 2 nights. C and D tie on safes and lachealas too.
+  // B: 3 pts in 1 night. A, C, D: 3 pts in 2 nights. C and D tie on saves and lachealas too.
   assert.deepEqual(s.personal.rows.map((p) => [p.rank, p.name]), [[1, 'B'], [2, 'C'], [2, 'D'], [4, 'A']]);
 });
 

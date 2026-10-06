@@ -15,7 +15,7 @@
       "personal": {
         "1": { "Iakkel": { "ci": 1, "duelWon": 1 }, "Dragos": { "ci": 1 }, "Alin": { "ci": 1 } },
         "2": { "Dragos": { "ci": 2 } },
-        "3": { "Marc": { "ci": 1, "safe": 1, "lacheala": 1 } },
+        "3": { "Marc": { "ci": 1, "save": 1, "lacheala": 1 } },
         "5": { "Dragos": { "ci": 3 } },
         "6": { "Iakkel": { "duelWon": 1 } },
         "7": { "Dragos": { "ci": 2 } },

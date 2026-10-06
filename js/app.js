@@ -352,7 +352,7 @@ function leagueCard(p, started) {
         ${stat('P', p.played)}
         ${started ? [
           stat('CI', fmt(p.counts.ci)),
-          stat('Safe', fmt(p.counts.safe)),
+          stat('Save', fmt(p.counts.save)),
           stat('Lach', fmt(p.counts.lacheala)),
           stat('Duels', `${fmt(p.counts.duelWon)}-${fmt(p.counts.duelLost)}`),
         ].join('') : ''}
@@ -371,7 +371,7 @@ function personalSection(season) {
       <th scope="row" class="att-name">${esc(p.name)}</th>
       <td class="num c">${p.played}</td>
       <td class="num c">${started ? fmt(p.counts.ci) : dash}</td>
-      <td class="num c">${started ? fmt(p.counts.safe) : dash}</td>
+      <td class="num c">${started ? fmt(p.counts.save) : dash}</td>
       <td class="num c">${started ? fmt(p.counts.lacheala) : dash}</td>
       <td class="num c">${started ? `${fmt(p.counts.duelWon)}-${fmt(p.counts.duelLost)}` : dash}</td>
       ${formCell(p.form)}
@@ -394,7 +394,7 @@ function personalSection(season) {
           <th scope="col" class="att-name">Player</th>
           <th scope="col" class="c" title="Nights attended">P</th>
           <th scope="col" class="c" title="${esc(PERSONAL.ci.long)}">CI</th>
-          <th scope="col" class="c">Safe</th>
+          <th scope="col" class="c">Save</th>
           <th scope="col" class="c">Lach</th>
           <th scope="col" class="c" title="Duels won-lost">Duels</th>
           <th scope="col" class="form" title="Last 5 nights">Form</th>
@@ -537,7 +537,7 @@ function renderRules() {
     ['Team size', `Teams of up to 6 lose nothing. Bigger teams lose points on the night (${ded}). Teams are capped at 10.`],
     ...Object.values(CHEATS).map((c) => [c.name, c.rule]),
     ...Object.values(PERSONAL).map((c) => [`${c.long} (${pointsText(c.points)})`, `Personal standings. ${c.rule}`]),
-    ['Red questions', 'A red question is worth double, so a CI, safe or other entry on one counts as 2.'],
+    ['Red questions', 'A red question is worth double, so a CI, save or other entry on one counts as 2.'],
     ['Quiz-night vs standings', 'Quiz-night points are the score on the night. General standings points add the season cheats on top.'],
     ['Old nights', 'Some early nights only have a final total recorded. That total is used for both scores.'],
   ];
