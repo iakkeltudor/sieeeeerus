@@ -189,6 +189,9 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 .att-mark { display: inline-block; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--axis); vertical-align: middle; }
 .att-mark.went { background: var(--series-1); box-shadow: 0 0 0 2px var(--surface); }
 .attendance .total-cell { padding-left: 16px; color: var(--ink-2); }
+.standings .rank { width: 36px; text-align: center; color: var(--ink-2); padding-left: 10px; }
+.standings .att-name { position: static; }
+.standings td.total-cell b { color: var(--ink); }
 
 /* Charts ----------------------------------------------------------------- */
 .chart { padding: 18px 18px 10px; }

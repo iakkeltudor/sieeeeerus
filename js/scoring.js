@@ -69,6 +69,13 @@ export function validateNight(night, roster = null) {
     }
   }
   for (const c of cheats) if (!(c in CHEATS)) problems.push(`unknown cheat "${c}"`);
+  if (night.personal != null) {
+    for (const [name, pts] of Object.entries(night.personal)) {
+      if (roster && !roster.includes(name)) problems.push(`personal points for "${name}", who is not in the season's players list`);
+      else if (Array.isArray(night.attendees) && !night.attendees.includes(name)) problems.push(`personal points for ${name}, who isn't listed as attending`);
+      if (typeof pts !== 'number') problems.push(`personal points for ${name} must be a number`);
+    }
+  }
   if (night.rounds != null) {
     if (!Array.isArray(night.rounds) || night.rounds.length !== 8) problems.push('rounds must list 8 scores');
     else night.rounds.forEach((s, i) => {
@@ -151,7 +158,27 @@ export function scoreSeason(season) {
     summary: summarise(scored),
     rounds: roundStats(scored),
     attendance: attendance(season.players, scored),
+    personal: personalStandings(season.players, scored),
   };
+}
+
+// Personal standings. Placeholder rule until the real one is agreed: each night can give
+// people points in `personal: { "Name": points }`, and the standings add them up.
+function personalStandings(players, nights) {
+  if (!Array.isArray(players) || !players.length) return null;
+  const scoredNights = nights.filter((n) => n.played && n.personal && Object.keys(n.personal).length);
+  const rows = players.map((name, order) => {
+    const pts = scoredNights.filter((n) => name in n.personal).map((n) => n.personal[name]);
+    const attended = nights.filter((n) => n.played && Array.isArray(n.attendees) && n.attendees.includes(name)).length;
+    return { name, order, points: tidy(sum(pts)), scoredNights: pts.length, attended };
+  });
+  rows.sort((a, b) => b.points - a.points || b.attended - a.attended || a.order - b.order);
+  let rank = 0;
+  rows.forEach((r, i) => {
+    if (i === 0 || r.points !== rows[i - 1].points) rank = i + 1;
+    r.rank = rank;
+  });
+  return { nights: scoredNights.length, rows };
 }
 
 // Who went to which night. Only nights with an attendees list count towards the totals.

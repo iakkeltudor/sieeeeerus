@@ -84,6 +84,7 @@ function render(season) {
 
   parts.push(summarySection(season));
   parts.push(gridSection(season));
+  if (season.personal) parts.push(personalSection(season));
   if (season.attendance?.tracked) parts.push(attendanceSection(season));
   parts.push(`<section class="section two-up">
     <div class="panel chart" id="points-chart">
@@ -150,7 +151,7 @@ function summarySection({ season, summary: s, status }) {
 
 function jokerSentence(s) {
   if (!s.jokersPlayed) return 'The dot is the average score, the line runs from the worst to the best night.';
-  return `The dot is the average. Our joker landed on the best round ${s.jokersOnBest} of ${s.jokersPlayed} times, `
+  return `The dot is the average. ${s.jokersOnBest} of our ${s.jokersPlayed} joker${s.jokersPlayed === 1 ? '' : 's'} went on the best round of the night, `
     + `earning ${fmt(s.jokerPoints)} of a possible ${fmt(s.jokerPoints + s.jokerLoss)} points.`;
 }
 
@@ -272,6 +273,30 @@ function wireGrid(season) {
       <div class="row"><span>Score</span><b>${fmt(s)} of ${MAX_ROUND_SCORE}</b></div>
       ${notes.map((x) => `<div>${x}</div>`).join('')}`);
   });
+}
+
+// Personal standings -----------------------------------------------------
+function personalSection(season) {
+  const { rows, nights } = season.personal;
+  const started = nights > 0;
+  const body = rows.map((p) => `<tr>
+      <td class="rank num">${started ? p.rank : '–'}</td>
+      <th scope="row" class="att-name">${esc(p.name)}</th>
+      <td class="total-cell"><b>${started ? fmt(p.points) : '–'}</b></td>
+      <td class="total-cell">${p.attended}</td>
+    </tr>`).join('');
+  return `<section class="section">
+    <div class="section-head">
+      <h2>Personal standings</h2>
+      <p>${started ? `After ${nights} scored night${nights === 1 ? '' : 's'}.` : 'Personal points haven’t been added yet.'}</p>
+    </div>
+    <div class="panel sheet-scroll fit">
+      <table class="sheet attendance standings">
+        <thead><tr><th scope="col" class="rank">#</th><th scope="col" class="att-name">Player</th><th class="total" scope="col">Points</th><th class="total" scope="col">Nights</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  </section>`;
 }
 
 // Attendance -------------------------------------------------------------

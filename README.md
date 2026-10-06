@@ -52,6 +52,16 @@ The top of each season file lists the team, which is what the "Who went" table i
 
 When someone joins mid-season, add them to `players`. Earlier nights will show them as not attending.
 
+## Personal standings
+
+For now each night can give points to the people who were there, and the standings add them up:
+
+```json
+"personal": { "Iakkel": 3, "Dragos": 1 }
+```
+
+This is a placeholder until the real scoring rules are decided.
+
 ## Starting a new season
 
 1. Create `data/season-5.json` containing `{ "season": 5, "players": [], "nights": [] }`.

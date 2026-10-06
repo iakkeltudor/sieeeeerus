@@ -1,5 +1,18 @@
 {
   "season": 4,
-  "players": [],
-  "nights": []
+  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin"],
+  "nights": [
+    {
+      "id": "Quiz 1",
+      "date": null,
+      "theme": "Street culture / Drugs",
+      "attendees": ["Iakkel", "Dragos", "Marc", "Muri", "Alin"],
+      "place": 1,
+      "rounds": [11, 10, 8, 6, 10, 10, 9, 8.5],
+      "topics": { "4": "Street culture", "5": "Drugs", "7": "Famous streets" },
+      "joker": 6,
+      "cheats": [],
+      "personal": {}
+    }
+  ]
 }

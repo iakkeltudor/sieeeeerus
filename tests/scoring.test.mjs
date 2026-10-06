@@ -100,13 +100,44 @@ test('attendance validation catches typos and mismatched team size', () => {
   assert.deepEqual(validateNight({ attendees: ['Ana', 'Bogdan'], guests: 1, teamSize: 3, cheats: [] }, roster), []);
 });
 
+test('season 4 quiz 1 totals 82.5', () => {
+  const s4 = scoreSeason(load('season-4.json'));
+  const q1 = s4.nights[0];
+  assert.equal(q1.teamSize, 5);
+  assert.equal(q1.deduction, 0);
+  assert.equal(q1.base, 72.5);
+  assert.equal(q1.nightPoints, 82.5);
+  assert.equal(q1.generalPoints, 82.5);
+  for (const n of load('season-4.json').nights) assert.deepEqual(validateNight(n, load('season-4.json').players), [], n.id);
+});
+
+test('personal standings add up points and share ranks on ties', () => {
+  const r = [10, 10, 10, 10, 10, 10, 10, 10];
+  const s = scoreSeason({
+    season: 0,
+    players: ['Ana', 'Bogdan', 'Cris'],
+    nights: [
+      { id: 'a', rounds: r, attendees: ['Ana', 'Bogdan', 'Cris'], personal: { Ana: 3, Bogdan: 1, Cris: 2 }, cheats: [] },
+      { id: 'b', rounds: r, attendees: ['Ana', 'Bogdan'], personal: { Ana: 0, Bogdan: 2 }, cheats: [] },
+      { id: 'c', rounds: r, attendees: ['Cris'], cheats: [] },
+    ],
+  });
+  assert.equal(s.personal.nights, 2);
+  assert.deepEqual(s.personal.rows.map((p) => [p.rank, p.name, p.points, p.attended]), [[1, 'Ana', 3, 2], [1, 'Bogdan', 3, 2], [3, 'Cris', 2, 2]]);
+  assert.deepEqual(
+    validateNight({ attendees: ['Ana'], personal: { Bogdan: 1, Zed: 2 }, cheats: [] }, ['Ana', 'Bogdan']),
+    ["personal points for Bogdan, who isn't listed as attending", 'personal points for "Zed", who is not in the season\'s players list'],
+  );
+});
+
 test('a season without a players list has no attendance', () => {
   assert.equal(s3.attendance, null);
 });
 
 test('an empty season scores cleanly', () => {
-  const s = scoreSeason(load('season-4.json'));
+  const s = scoreSeason({ season: 5, players: [], nights: [] });
   assert.equal(s.summary.played, 0);
+  assert.equal(s.personal, null);
   assert.equal(s.summary.avgPlace, null);
   assert.equal(s.summary.jokerEfficiency, null);
 });
