@@ -4,6 +4,15 @@ Pub quiz results for team Sieeeeerus, season by season. A plain static site (HTM
 
 Season 3 was moved over from `Sieeeeerus.xlsx`. The scoring code reproduces every number from that workbook, and `tests/` checks that it still does.
 
+## After editing css/styles.css, js/app.js, js/scoring.js or js/charts.js
+
+GitHub Pages lets browsers cache these for about 10 minutes, so a phone can keep showing the old version for a while after a deploy. Bump the `?v=` number by one in all four places so the new files get fetched right away:
+
+- `index.html`: the `css/styles.css?v=` link and the `js/app.js?v=` script tag
+- `js/app.js`: the `?v=` on its two imports, `./scoring.js?v=` and `./charts.js?v=`
+
+Editing `data/*.json` alone doesn't need a bump — the page fetches those fresh every time.
+
 ## Logging a quiz night
 
 Add an entry to the end of the `nights` list in `data/season-4.json`. You can do this from the GitHub website: open the file, click the pencil icon, edit, then commit. The site updates a minute or two later.
@@ -88,6 +97,18 @@ Each night can list who drank what:
 ```
 
 Beer names are matched ignoring capitals and extra spaces, so `Ursus` and `ursus ` count as the same beer. The site shows the first spelling it finds. Only nights with a `beers` entry count towards the per-night averages, so a night you forgot to log doesn't pull them down.
+
+If you know each person's total but not which beer they drank, use `"Unknown"` as the beer name for them, and add a separate `beerTypes` with the night's real totals per beer:
+
+```json
+"beers": {
+  "Marc": { "Unknown": 7 },
+  "Dragos": { "Unknown": 6 }
+},
+"beerTypes": { "Birra": 18, "Ciuc": 12 }
+```
+
+Each person's total still counts correctly towards their own numbers and the leaderboard; `beerTypes` only feeds the team-wide "What we drink" chart, so the two aren't double-counted. If both are given, their totals must match — the site flags it if they don't.
 
 ## Starting a new season
 

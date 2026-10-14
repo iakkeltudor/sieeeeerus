@@ -25,7 +25,7 @@
         "Iakkel": { "Birra": 5, "Ciuc": 1 },
         "Dragos": { "Birra": 5, "Ciuc": 1 },
         "Marc": { "Birra": 5, "Ciuc": 2 },
-        "Muri": { "Birra": 5, "Ciuc": 1 },
+        "Muri": { "Birra": 5, "Ciuc": 2 },
         "Alin": { "Birra": 4, "Ciuc": 1, "Heineken": 1 }
       }
     },
@@ -41,7 +41,16 @@
       "cheats": [],
       "personal": {
         "night": { "Marc": { "ci": 2 }, "Dragos": { "ci": 10 }, "Claudiu": { "ci": 1 }, "Madaras": { "ci": 2 } }
-      }
+      },
+      "beers": {
+        "Marc": { "Unknown": 7 },
+        "Dragos": { "Unknown": 6 },
+        "Madaras": { "Unknown": 5 },
+        "Claudiu": { "Unknown": 3 },
+        "Dani": { "Unknown": 2 },
+        "Muri": { "Unknown": 7 }
+      },
+      "beerTypes": { "Birra": 18, "Ciuc": 12 }
     }
   ]
 }

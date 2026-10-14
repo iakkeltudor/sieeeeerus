@@ -135,17 +135,33 @@ test('season 4 quiz 2 totals 89.5 and counts night-level personal points', () =>
   assert.equal(rows.Dragos.played, 2);
   assert.equal(rows.Madaras.points, 2);
   assert.equal(rows.Iakkel.played, 1);
-  // Beer averages ignore Quiz 2, which has no beers logged.
-  assert.equal(s4.beers.nights, 1);
+  // Quiz 2's beers are logged as totals-only (no per-person type), via beerTypes.
+  assert.equal(s4.beers.nights, 2);
 });
 
-test('season 4 beers after quiz 1', () => {
+test('season 4 beers after quiz 1 (Marc and Muri both drank 7)', () => {
   const raw = load('season-4.json');
   const b = scoreSeason({ ...raw, nights: raw.nights.filter((n) => n.id === 'Quiz 1') }).beers;
-  assert.equal(b.total, 31);
-  assert.deepEqual(b.record, { count: 7, holders: [{ player: 'Marc', night: 'Quiz 1' }] });
-  assert.deepEqual(b.types, [{ name: 'Birra', count: 24 }, { name: 'Ciuc', count: 6 }, { name: 'Heineken', count: 1 }]);
-  assert.deepEqual(b.rows.filter((r) => r.nightsLogged).map((r) => [r.rank, r.name, r.total]), [[1, 'Marc', 7], [2, 'Iakkel', 6], [2, 'Dragos', 6], [2, 'Muri', 6], [2, 'Alin', 6]]);
+  assert.equal(b.total, 32);
+  assert.deepEqual(b.record, { count: 7, holders: [{ player: 'Marc', night: 'Quiz 1' }, { player: 'Muri', night: 'Quiz 1' }] });
+  assert.deepEqual(b.types, [{ name: 'Birra', count: 24 }, { name: 'Ciuc', count: 7 }, { name: 'Heineken', count: 1 }]);
+  assert.deepEqual(b.rows.filter((r) => r.nightsLogged).map((r) => [r.rank, r.name, r.total]),
+    [[1, 'Marc', 7], [1, 'Muri', 7], [3, 'Iakkel', 6], [3, 'Dragos', 6], [3, 'Alin', 6]]);
+});
+
+test('season 4 beers: quiz 2 known as team totals only (18 Birra, 12 Ciuc), still add up to 30', () => {
+  const raw = load('season-4.json');
+  const q2 = raw.nights.find((n) => n.id === 'Quiz 2');
+  const personTotal = Object.values(q2.beers).reduce((a, d) => a + Object.values(d).reduce((x, y) => x + y, 0), 0);
+  assert.equal(personTotal, 30);
+  assert.deepEqual(q2.beerTypes, { Birra: 18, Ciuc: 12 });
+  const full = scoreSeason(raw).beers;
+  // Season totals combine Quiz 1's real per-person types with Quiz 2's team-only split.
+  assert.equal(full.total, 62);
+  assert.deepEqual(full.types, [{ name: 'Birra', count: 42 }, { name: 'Ciuc', count: 19 }, { name: 'Heineken', count: 1 }]);
+  const rows = Object.fromEntries(full.rows.map((p) => [p.name, p]));
+  assert.equal(rows.Marc.total, 14); // 7 on Quiz 1 + 7 on Quiz 2
+  assert.equal(rows.Madaras.total, 5); // only played Quiz 2
 });
 
 test('personal points: CI +1, save +1.5, lacheala -1.5, duels +/-1', () => {
@@ -258,6 +274,33 @@ test('beer validation', () => {
   assert.deepEqual(validateNight(night({ Zed: { Ursus: 1 } }), roster), ['beers: "Zed" is not in the season\'s players list']);
   assert.deepEqual(validateNight(night({ Ana: { Ursus: 0 } }), roster), ["beers: Ana's Ursus count must be a number above 0"]);
   assert.deepEqual(validateNight(night({ Ana: { ' ': 1 } }), roster), ['beers: Ana has a beer with no name']);
+});
+
+test('beerTypes: a night can record team totals per beer without saying who drank what', () => {
+  const s = scoreSeason({
+    season: 0,
+    players: ['Ana', 'Bogdan'],
+    nights: [
+      { id: 'Quiz 1', rounds: r10, attendees: ['Ana', 'Bogdan'], cheats: [],
+        beers: { Ana: { Unknown: 3 }, Bogdan: { Unknown: 2 } }, beerTypes: { Ursus: 4, Ciuc: 1 } },
+    ],
+  });
+  const b = s.beers;
+  // Total comes from the per-person counts, not doubled up with beerTypes.
+  assert.equal(b.total, 5);
+  assert.deepEqual(b.types, [{ name: 'Ursus', count: 4 }, { name: 'Ciuc', count: 1 }]);
+  assert.deepEqual(b.rows.map((r) => [r.rank, r.name, r.total]), [[1, 'Ana', 3], [2, 'Bogdan', 2]]);
+});
+
+test('beerTypes validation: shape, zero/negative counts, and must match the per-person total', () => {
+  const roster = ['Ana'];
+  const night = (beers, beerTypes) => ({ attendees: ['Ana'], beers, beerTypes, cheats: [] });
+  assert.deepEqual(validateNight(night({ Ana: { Unknown: 3 } }, { Ursus: 3 }), roster), []);
+  assert.deepEqual(validateNight(night({ Ana: { Unknown: 3 } }, { Ursus: 2 }), roster),
+    ['beers add up to 3 per person but 2 in beerTypes — these should match']);
+  assert.deepEqual(validateNight(night(undefined, { Ursus: 0 }), roster), ['beerTypes: Ursus count must be a number above 0']);
+  assert.deepEqual(validateNight(night(undefined, { ' ': 2 }), roster), ['beerTypes has a beer with no name']);
+  assert.deepEqual(validateNight(night(undefined, ['Ursus']), roster), ['beerTypes must look like { "Beer": 18 }']);
 });
 
 test('a season without a players list has no attendance', () => {

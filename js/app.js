@@ -1,5 +1,8 @@
-import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js';
-import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js';
+// The ?v= on these two imports (and on index.html's links to this file and to styles.css) is a
+// manual cache-buster: GitHub Pages lets browsers cache these files for ~10 minutes, so bump every
+// "v=" by one, in all four places, whenever this file, scoring.js, charts.js or styles.css changes.
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=3';
+import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=3';
 
 const app = document.getElementById('app');
 const tabs = document.getElementById('season-tabs');
@@ -261,12 +264,19 @@ function detail(n, players, compact = false) {
     ? `<div><h4>Who went</h4><p>${n.attendees.map(esc).join(', ')}${n.guests ? `, plus ${n.guests} guest${n.guests === 1 ? '' : 's'}` : ''}</p></div>`
     : '';
   const beerEntries = Object.entries(n.beers ?? {}).filter(([, d]) => d && Object.keys(d).length);
-  const beers = beerEntries.length
-    ? `<div><h4>Beers</h4><ul>${beerEntries.map(([name, d]) => {
-        const total = Object.values(d).reduce((a, c) => a + c, 0);
-        return `<li><span>${esc(name)} <span class="secondary small">${esc(Object.entries(d).map(([k, c]) => `${fmt(c)} ${k.trim()}`).join(', '))}</span></span><span class="num">${fmt(total)}</span></li>`;
-      }).join('')}</ul></div>`
+  const beerTypeNote = n.beerTypes
+    ? `<p class="secondary small">Known for the whole night: ${esc(Object.entries(n.beerTypes).map(([k, c]) => `${fmt(c)} ${k.trim()}`).join(', '))}. Who drank which wasn't recorded.</p>`
     : '';
+  const beers = beerEntries.length
+    ? `<div><h4>Beers</h4>${beerTypeNote}<ul>${beerEntries.map(([name, d]) => {
+        const total = Object.values(d).reduce((a, c) => a + c, 0);
+        const keys = Object.keys(d);
+        const detail = keys.length === 1 && keys[0].trim().toLowerCase() === 'unknown'
+          ? 'type not recorded'
+          : esc(Object.entries(d).map(([k, c]) => `${fmt(c)} ${k.trim()}`).join(', '));
+        return `<li><span>${esc(name)} <span class="secondary small">${detail}</span></span><span class="num">${fmt(total)}</span></li>`;
+      }).join('')}</ul></div>`
+    : beerTypeNote ? `<div><h4>Beers</h4>${beerTypeNote}</div>` : '';
   const factsList = (facts.length ? `<div><h4>The night</h4><ul>${facts.map(([k, v]) => `<li><span>${k}</span><span>${v}</span></li>`).join('')}</ul></div>` : '') + who + beers;
 
   if (n.afk) return `<div class="detail">${factsList}<div><h4>Score</h4><p>We used AFK, so this night scores the average of all our other nights: ${fmt(n.nightPoints)} on the night and ${fmt(n.generalPoints)} in the standings.</p></div></div>`;
