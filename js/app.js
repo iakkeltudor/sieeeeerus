@@ -427,22 +427,25 @@ function byRoundSection(season) {
   const rows = season.personal.rows.filter((p) => p.played);
   const max = Math.max(...rows.flatMap((p) => Object.values(p.byRound).map(Math.abs)), 0);
   const head = ROUNDS.map((r) => `<th class="round" scope="col">R${r.n}<span>${r.weekly ? 'weekly' : esc(r.name)}</span></th>`).join('');
+  // Points logged for a whole night (no round given) get their own column, only when there are any.
+  const hasUnassigned = rows.some((p) => p.unassigned);
   const body = rows.map((p) => `<tr>
       <th scope="row" class="att-name">${esc(p.name)}</th>
       ${ROUNDS.map((r) => {
         const v = p.byRound[r.n];
         return `<td class="pcell num" style="${tint(v, max)}" title="${esc(p.name)}, round ${r.n}: ${pointsText(v)}">${v ? pointsText(v) : '<span class="muted">·</span>'}</td>`;
       }).join('')}
+      ${hasUnassigned ? `<td class="pcell num" title="${esc(p.name)}, round not recorded: ${pointsText(p.unassigned)}">${p.unassigned ? pointsText(p.unassigned) : '<span class="muted">·</span>'}</td>` : ''}
       <td class="total-cell"><b>${fmt(p.points)}</b></td>
     </tr>`).join('');
   return `<section class="section">
     <div class="section-head">
       <h2>Personal points by round</h2>
-      <p>Season totals for each round. Blue is a net gain, red a net loss.</p>
+      <p>Season totals for each round. Blue is a net gain, red a net loss.${hasUnassigned ? ' “?” is points from nights where the round wasn’t recorded.' : ''}</p>
     </div>
     <div class="panel sheet-scroll fit">
       <table class="sheet attendance byround">
-        <thead><tr><th scope="col" class="att-name">Player</th>${head}<th class="total" scope="col">Total</th></tr></thead>
+        <thead><tr><th scope="col" class="att-name">Player</th>${head}${hasUnassigned ? '<th class="round" scope="col" title="Round not recorded">?<span>no round</span></th>' : ''}<th class="total" scope="col">Total</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>
@@ -454,7 +457,7 @@ function nightPersonalList(n, players) {
   if (!n.personal || !Object.keys(n.personal).length) return '';
   const rows = (players ?? []).filter((p) => n.attendees?.includes(p)).map((name) => ({ name, ...nightPersonal(n, name) }));
   return `<div class="detail-wide"><h4>Personal points</h4><ul class="plist">${rows.map((p) => {
-    const rounds = Object.entries(p.byRound).map(([r, c]) => `R${r} ${pointsText(c.points)}`).join(', ');
+    const rounds = Object.entries(p.byRound).map(([r, c]) => `${r === 'night' ? 'round not recorded' : `R${r}`} ${pointsText(c.points)}`).join(', ');
     return `<li><span class="pl-name">${esc(p.name)}</span><b class="num">${pointsText(p.points)}</b>
       <span class="pl-sub secondary">${rounds ? `${esc(countsText(p.counts))} (${rounds})` : 'Nothing this night'}</span></li>`;
   }).join('')}</ul></div>`;
@@ -476,7 +479,9 @@ function nightPersonalTable(n, players) {
       <td class="total-cell"><b>${pointsText(p.points)}</b></td>
       <td class="secondary small">${esc(countsText(p.counts)) || '–'}</td>
     </tr>`).join('');
+  const noRounds = 'night' in n.personal;
   return `<div class="detail-wide"><h4>Personal points</h4>
+    ${noRounds ? '<p class="secondary small">Some points for this night weren’t recorded by round, so they only show in the night total.</p>' : ''}
     <div class="sheet-scroll"><table class="mini">
       <thead><tr><th></th>${ROUNDS.map((r) => `<th scope="col">R${r.n}</th>`).join('')}<th scope="col" class="r">Night</th><th></th></tr></thead>
       <tbody>${body}</tbody>
@@ -509,7 +514,8 @@ function beerSection(season) {
     return `<section class="section">${head}<p class="secondary">No beers logged yet this season.</p></section>`;
   }
   const max = b.types[0]?.count ?? 0;
-  const board = b.rows.map((p) => `<tr>
+  // Skip people who weren't at any night where beers were written down.
+  const board = b.rows.filter((p) => p.nightsLogged || p.total).map((p) => `<tr>
       <td class="rank num">${p.rank}</td>
       <th scope="row" class="beer-name">${esc(p.name)}
         <span class="beer-sub">${p.beers.length ? beerList(p.beers, 3) : '<span class="muted">Nothing logged</span>'}</span></th>

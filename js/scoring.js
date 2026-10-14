@@ -85,7 +85,7 @@ export function validateNight(night, roster = null) {
   if (night.personal != null) {
     const reported = new Set();
     for (const [round, people] of Object.entries(night.personal)) {
-      if (!/^[1-8]$/.test(round)) { problems.push(`personal: "${round}" is not a round number 1-8`); continue; }
+      if (!/^[1-8]$/.test(round) && round !== 'night') { problems.push(`personal: "${round}" is not a round number 1-8 or "night"`); continue; }
       for (const [name, counts] of Object.entries(people ?? {})) {
         if (roster && !roster.includes(name)) {
           if (!reported.has(name)) problems.push(`personal: "${name}" is not in the season's players list`);
@@ -297,16 +297,20 @@ function table(players, nights) {
     const attended = nights.filter((n) => Array.isArray(n.attendees) && n.attendees.includes(name));
     const counts = emptyCounts();
     const byRound = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((r) => [r, 0]));
+    let unassigned = 0; // points recorded for the whole night, not a specific round
     const form = [];
     for (const n of attended) {
       const p = nightPersonal(n, name);
       addCounts(counts, p.counts);
-      for (const [r, v] of Object.entries(p.byRound)) byRound[r] = tidy(byRound[r] + v.points);
+      for (const [r, v] of Object.entries(p.byRound)) {
+        if (r === 'night') unassigned = tidy(unassigned + v.points);
+        else byRound[r] = tidy(byRound[r] + v.points);
+      }
       if (hasPersonal(n)) form.push({ id: n.id, points: p.points });
     }
     const points = personalPoints(counts);
     return {
-      name, order, counts, byRound, points,
+      name, order, counts, byRound, unassigned, points,
       played: attended.length,
       perNight: attended.length ? tidy(points / attended.length) : null,
       form: form.slice(-5),

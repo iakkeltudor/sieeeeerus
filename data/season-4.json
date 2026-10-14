@@ -1,6 +1,6 @@
 {
   "season": 4,
-  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin"],
+  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras"],
   "nights": [
     {
       "id": "Quiz 1",
@@ -27,6 +27,20 @@
         "Marc": { "Birra": 5, "Ciuc": 2 },
         "Muri": { "Birra": 5, "Ciuc": 1 },
         "Alin": { "Birra": 4, "Ciuc": 1, "Heineken": 1 }
+      }
+    },
+    {
+      "id": "Quiz 2",
+      "date": "2026-10-13",
+      "theme": "Gastro / Fast food",
+      "attendees": ["Marc", "Dragos", "Kollar", "Muri", "Claudiu", "Dani", "Madaras"],
+      "place": 1,
+      "rounds": [11, 11, 10, 10.5, 8, 11, 8, 10],
+      "topics": { "4": "Gastro", "5": "Fast Food", "7": "Wolt" },
+      "joker": 6,
+      "cheats": [],
+      "personal": {
+        "night": { "Marc": { "ci": 2 }, "Dragos": { "ci": 10 }, "Claudiu": { "ci": 1 }, "Madaras": { "ci": 2 } }
       }
     }
   ]

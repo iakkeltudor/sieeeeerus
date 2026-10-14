@@ -115,9 +115,28 @@ test('season 4 personal standings after quiz 1', () => {
   // Only Quiz 1, so this keeps passing as later nights are added to the file.
   const raw = load('season-4.json');
   const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => n.id === 'Quiz 1') });
-  const rows = s4.personal.rows.map((p) => [p.rank, p.name, p.points]);
+  const rows = s4.personal.rows.filter((p) => p.played).map((p) => [p.rank, p.name, p.points]);
   // Dragos 9 CI; Iakkel 1 CI + 2 duels; Marc 1 + 1.5 - 1.5 ranks above Alin and Muri on saves.
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
+});
+
+test('season 4 quiz 2 totals 89.5 and counts night-level personal points', () => {
+  const raw = load('season-4.json');
+  for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
+  const s4 = scoreSeason(raw);
+  const q2 = s4.nights.find((n) => n.id === 'Quiz 2');
+  assert.equal(q2.teamSize, 7);
+  assert.equal(q2.deduction, 1);
+  assert.equal(q2.base, 79.5);
+  assert.equal(q2.nightPoints, 89.5);
+  const rows = Object.fromEntries(s4.personal.rows.map((p) => [p.name, p]));
+  assert.equal(rows.Dragos.points, 19);
+  assert.equal(rows.Dragos.unassigned, 10);
+  assert.equal(rows.Dragos.played, 2);
+  assert.equal(rows.Madaras.points, 2);
+  assert.equal(rows.Iakkel.played, 1);
+  // Beer averages ignore Quiz 2, which has no beers logged.
+  assert.equal(s4.beers.nights, 1);
 });
 
 test('season 4 beers after quiz 1', () => {
@@ -126,7 +145,7 @@ test('season 4 beers after quiz 1', () => {
   assert.equal(b.total, 31);
   assert.deepEqual(b.record, { count: 7, holders: [{ player: 'Marc', night: 'Quiz 1' }] });
   assert.deepEqual(b.types, [{ name: 'Birra', count: 24 }, { name: 'Ciuc', count: 6 }, { name: 'Heineken', count: 1 }]);
-  assert.deepEqual(b.rows.map((r) => [r.rank, r.name, r.total]), [[1, 'Marc', 7], [2, 'Iakkel', 6], [2, 'Dragos', 6], [2, 'Muri', 6], [2, 'Alin', 6]]);
+  assert.deepEqual(b.rows.filter((r) => r.nightsLogged).map((r) => [r.rank, r.name, r.total]), [[1, 'Marc', 7], [2, 'Iakkel', 6], [2, 'Dragos', 6], [2, 'Muri', 6], [2, 'Alin', 6]]);
 });
 
 test('personal points: CI +1, save +1.5, lacheala -1.5, duels +/-1', () => {
@@ -183,7 +202,8 @@ test('personal validation', () => {
   const roster = ['Ana', 'Bogdan'];
   const night = (personal) => ({ attendees: ['Ana'], personal, cheats: [] });
   assert.deepEqual(validateNight(night({ 1: { Ana: { ci: 1 } } }), roster), []);
-  assert.deepEqual(validateNight(night({ 9: { Ana: { ci: 1 } } }), roster), ['personal: "9" is not a round number 1-8']);
+  assert.deepEqual(validateNight(night({ 9: { Ana: { ci: 1 } } }), roster), ['personal: "9" is not a round number 1-8 or "night"']);
+  assert.deepEqual(validateNight(night({ night: { Ana: { ci: 2 } } }), roster), []);
   assert.deepEqual(validateNight(night({ 1: { Bogdan: { ci: 1 } }, 2: { Bogdan: { ci: 1 } } }), roster), ["personal: Bogdan has points but isn't listed as attending"]);
   assert.deepEqual(validateNight(night({ 1: { Zed: { ci: 1 } } }), roster), ['personal: "Zed" is not in the season\'s players list']);
   assert.match(validateNight(night({ 1: { Ana: { cl: 1 } } }), roster)[0], /unknown category "cl"/);
