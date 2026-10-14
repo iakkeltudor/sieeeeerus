@@ -1,8 +1,8 @@
 // The ?v= on these two imports (and on index.html's links to this file and to styles.css) is a
 // manual cache-buster: GitHub Pages lets browsers cache these files for ~10 minutes, so bump every
 // "v=" by one, in all four places, whenever this file, scoring.js, charts.js or styles.css changes.
-import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=3';
-import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=3';
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=4';
+import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=4';
 
 const app = document.getElementById('app');
 const tabs = document.getElementById('season-tabs');
@@ -499,12 +499,6 @@ function nightPersonalTable(n, players) {
 }
 
 // BeerTracker ------------------------------------------------------------
-const beerList = (beers, limit = Infinity) => {
-  const shown = beers.slice(0, limit).map((b) => `${esc(b.name)} ${fmt(b.count)}`);
-  if (beers.length > limit) shown.push(`+${beers.length - limit} more`);
-  return shown.join(', ');
-};
-
 const andList = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 
 // "Marc on Quiz 1", or "Iakkel, Marc and Muri on Quiz 1", or "Ana on Quiz 1 and Bogdan on Quiz 2".
@@ -527,8 +521,7 @@ function beerSection(season) {
   // Skip people who weren't at any night where beers were written down.
   const board = b.rows.filter((p) => p.nightsLogged || p.total).map((p) => `<tr>
       <td class="rank num">${p.rank}</td>
-      <th scope="row" class="beer-name">${esc(p.name)}
-        <span class="beer-sub">${p.beers.length ? beerList(p.beers, 3) : '<span class="muted">Nothing logged</span>'}</span></th>
+      <th scope="row" class="beer-name">${esc(p.name)}</th>
       <td class="num pts">${fmt(p.total)}</td>
       <td class="num c secondary">${p.perNight != null ? fmt(p.perNight, 1) : '–'}</td>
     </tr>`).join('');

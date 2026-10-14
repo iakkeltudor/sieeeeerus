@@ -35,7 +35,7 @@
       "theme": "Gastro / Fast food",
       "attendees": ["Marc", "Dragos", "Kollar", "Muri", "Claudiu", "Dani", "Madaras"],
       "place": 1,
-      "rounds": [11, 11, 10, 10.5, 8, 11, 8, 10],
+      "rounds": [11, 11, 10, 10.5, 8, 11, 8, 9.5],
       "topics": { "4": "Gastro", "5": "Fast Food", "7": "Wolt" },
       "joker": 6,
       "cheats": [],

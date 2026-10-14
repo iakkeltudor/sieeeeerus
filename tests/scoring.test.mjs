@@ -120,15 +120,15 @@ test('season 4 personal standings after quiz 1', () => {
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
 });
 
-test('season 4 quiz 2 totals 89.5 and counts night-level personal points', () => {
+test('season 4 quiz 2 totals 89 and counts night-level personal points', () => {
   const raw = load('season-4.json');
   for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
   const s4 = scoreSeason(raw);
   const q2 = s4.nights.find((n) => n.id === 'Quiz 2');
   assert.equal(q2.teamSize, 7);
   assert.equal(q2.deduction, 1);
-  assert.equal(q2.base, 79.5);
-  assert.equal(q2.nightPoints, 89.5);
+  assert.equal(q2.base, 79);
+  assert.equal(q2.nightPoints, 89);
   const rows = Object.fromEntries(s4.personal.rows.map((p) => [p.name, p]));
   assert.equal(rows.Dragos.points, 19);
   assert.equal(rows.Dragos.unassigned, 10);
