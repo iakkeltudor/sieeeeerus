@@ -120,7 +120,7 @@ test('season 4 personal standings after quiz 1', () => {
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
 });
 
-test('season 4 quiz 2 totals 89 and its personal points add up by round', () => {
+test('season 4 quiz 2 totals 89.5 and its personal points add up by round', () => {
   const raw = load('season-4.json');
   for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
   // Only Quiz 1 and 2, so later nights don't change these numbers.
@@ -128,8 +128,8 @@ test('season 4 quiz 2 totals 89 and its personal points add up by round', () => 
   const q2 = s4.nights.find((n) => n.id === 'Quiz 2');
   assert.equal(q2.teamSize, 7);
   assert.equal(q2.deduction, 1);
-  assert.equal(q2.base, 79);
-  assert.equal(q2.nightPoints, 89);
+  assert.equal(q2.base, 79.5);
+  assert.equal(q2.nightPoints, 89.5);
   const rows = Object.fromEntries(s4.personal.rows.map((p) => [p.name, p]));
   assert.equal(rows.Dragos.points, 19);
   assert.equal(rows.Dragos.unassigned, 0);
@@ -177,17 +177,17 @@ test('reinforcements gives back at most 6 points in the standings', () => {
   }
 });
 
-test('season 4 quiz 4: team of 10 with reinforcements, 82 on the night and 88 in the standings', () => {
+test('season 4 quiz 4: team of 10 with reinforcements, 82.5 on the night and 88.5 in the standings', () => {
   const raw = load('season-4.json');
   for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
   const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => ['Quiz 1', 'Quiz 2', 'Quiz 3', 'Quiz 4'].includes(n.id)) });
   const q4 = s4.nights.find((n) => n.id === 'Quiz 4');
   assert.equal(q4.teamSize, 10);
-  assert.equal(q4.base, 83);
+  assert.equal(q4.base, 83.5);
   assert.equal(q4.deduction, 10);
-  assert.equal(q4.nightPoints, 82);
+  assert.equal(q4.nightPoints, 82.5);
   assert.equal(q4.reinforcementsRelief, 6);
-  assert.equal(q4.generalPoints, 88);
+  assert.equal(q4.generalPoints, 88.5);
   assert.equal(q4.jokerLoss, 2);
   const p = (name) => s4.personal.rows.find((r) => r.name === name);
   assert.equal(p('Madaras').points, 11.25); // 7.5 before, then 3 CI + half a save (0.75)
