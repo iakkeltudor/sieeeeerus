@@ -14,7 +14,6 @@
   --joker: #c98500;
   --good: #006300;
   --neg: #e34948;       /* diverging negative pole */
-  --beer: #b57700;
   --good-fill: #0ca30c;
   --bad-fill: #d03b3b;
   --bad-text: #b52a2a;
@@ -38,7 +37,6 @@
     --joker: #eda100;
     --good: #0ca30c;
     --neg: #e66767;
-    --beer: #c98500;
     --bad-text: #e66767;
   }
 }
@@ -292,15 +290,9 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 /* BeerTracker ------------------------------------------------------------- */
 .beer-figures { margin-bottom: 20px; }
 .beer-figures .dd-sub { font-size: 0.85rem; font-weight: 400; color: var(--ink-2); }
-.beer-board { padding: 6px 10px; align-self: start; }
+.beer-board { padding: 6px 10px; max-width: 520px; }
 .beer-table { width: 100%; }
 .beer-table .beer-name { font-weight: 600; white-space: normal; text-align: left; }
-.beer-bars { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 4px; }
-.beer-bar { display: grid; grid-template-columns: minmax(80px, 34%) 1fr 36px; align-items: center; gap: 10px; padding: 5px 0; cursor: default; }
-.bb-name { font-size: 0.9rem; color: var(--ink); overflow-wrap: anywhere; }
-.bb-track { height: 16px; }
-.bb-fill { display: block; height: 100%; min-width: 4px; background: var(--beer); border-radius: 0 4px 4px 0; }
-.bb-val { text-align: right; font-weight: 700; }
 
 /* Phone layouts ---------------------------------------------------------- */
 .mob-only { display: none; }

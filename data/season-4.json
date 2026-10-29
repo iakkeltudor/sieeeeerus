@@ -1,6 +1,6 @@
 {
   "season": 4,
-  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras", "Bebu"],
+  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras", "Bebu", "Tudorel", "Daria", "Anne", "Matei"],
   "nights": [
     {
       "id": "Quiz 1",
@@ -85,6 +85,26 @@
         "Bebu": { "Unknown": 6 },
         "Madaras": { "Unknown": 3 },
         "Claudiu": { "Unknown": 3 }
+      }
+    },
+    {
+      "id": "Quiz 4",
+      "date": null,
+      "theme": "Science / Technology",
+      "attendees": ["Marc", "Tudorel", "Dragos", "Daria", "Anne", "Matei", "Muri", "Madaras", "Alin", "Bebu"],
+      "place": 2,
+      "rounds": [11, 11, 11, 11, 11, 9, 8, 11],
+      "topics": { "4": "Science", "5": "Technology", "7": "Experiments" },
+      "joker": 6,
+      "cheats": ["reinforcements"],
+      "personal": {
+        "1": { "Madaras": { "ci": 1 } },
+        "3": { "Bebu": { "ci": 1 }, "Marc": { "ci": 2 }, "Dragos": { "save": 1 } },
+        "4": { "Muri": { "ci": 1 } },
+        "5": { "Bebu": { "ci": 5 } },
+        "6": { "Alin": { "ci": 1 }, "Madaras": { "ci": 2 } },
+        "7": { "Dragos": { "ci": 1 } },
+        "8": { "Madaras": { "save": 0.5 } }
       }
     }
   ]

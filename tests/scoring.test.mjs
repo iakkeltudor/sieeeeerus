@@ -146,7 +146,7 @@ test('season 4 quiz 2 totals 89 and its personal points add up by round', () => 
 test('season 4 quiz 3 totals 86.41, with half CIs and beers without a type', () => {
   const raw = load('season-4.json');
   for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
-  const s4 = scoreSeason(raw);
+  const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => ['Quiz 1', 'Quiz 2', 'Quiz 3'].includes(n.id)) });
   const q3 = s4.nights.find((n) => n.id === 'Quiz 3');
   assert.equal(q3.teamSize, 6);
   assert.equal(q3.deduction, 0);
@@ -161,6 +161,38 @@ test('season 4 quiz 3 totals 86.41, with half CIs and beers without a type', () 
   assert.equal(s4.beers.total, 88);
   assert.equal(s4.beers.untyped, 27);
   assert.deepEqual(s4.beers.types.map((t) => t.name), ['Birra', 'Ciuc', 'Heineken']);
+});
+
+test('reinforcements gives back at most 6 points in the standings', () => {
+  const night = (teamSize) => scoreSeason({
+    season: 0, nights: [{ id: 'x', rounds: r10, joker: 1, teamSize, cheats: ['reinforcements'] }],
+  }).nights[0];
+  // 80 + 10 joker = 90 before any deduction.
+  for (const [size, ded, back] of [[7, 1, 1], [8, 3, 3], [9, 6, 6], [10, 10, 6]]) {
+    const n = night(size);
+    assert.equal(n.nightPoints, 90 - ded, `team of ${size} on the night`);
+    assert.equal(n.reinforcementsRelief, back, `team of ${size} relief`);
+    assert.equal(n.generalPoints, 90 - ded + back, `team of ${size} standings`);
+    assert.equal(n.cheatBenefit, back);
+  }
+});
+
+test('season 4 quiz 4: team of 10 with reinforcements, 82 on the night and 88 in the standings', () => {
+  const raw = load('season-4.json');
+  for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
+  const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => ['Quiz 1', 'Quiz 2', 'Quiz 3', 'Quiz 4'].includes(n.id)) });
+  const q4 = s4.nights.find((n) => n.id === 'Quiz 4');
+  assert.equal(q4.teamSize, 10);
+  assert.equal(q4.base, 83);
+  assert.equal(q4.deduction, 10);
+  assert.equal(q4.nightPoints, 82);
+  assert.equal(q4.reinforcementsRelief, 6);
+  assert.equal(q4.generalPoints, 88);
+  assert.equal(q4.jokerLoss, 2);
+  const p = (name) => s4.personal.rows.find((r) => r.name === name);
+  assert.equal(p('Madaras').points, 11.25); // 7.5 before, then 3 CI + half a save (0.75)
+  assert.equal(p('Bebu').points, 9.5); // 3.5 before, then 6 CI
+  assert.equal(p('Dragos').points, 21.5); // 19 before, then 1 CI + 1 save
 });
 
 test('season 4 beers after quiz 1 (Marc drank the most, 7)', () => {

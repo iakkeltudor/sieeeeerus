@@ -1,8 +1,8 @@
 // The ?v= on these two imports (and on index.html's links to this file and to styles.css) is a
 // manual cache-buster: GitHub Pages lets browsers cache these files for ~10 minutes, so bump every
 // "v=" by one, in all four places, whenever this file, scoring.js, charts.js or styles.css changes.
-import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=5';
-import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=5';
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=6';
+import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=6';
 
 const app = document.getElementById('app');
 const tabs = document.getElementById('season-tabs');
@@ -88,7 +88,6 @@ function render(season) {
   parts.push(summarySection(season));
   parts.push(gridSection(season));
   if (season.personal) parts.push(personalSection(season));
-  if (season.beers) parts.push(beerSection(season));
   if (season.attendance?.tracked) parts.push(attendanceSection(season));
   parts.push(`<section class="section two-up">
     <div class="panel chart" id="points-chart">
@@ -105,11 +104,11 @@ function render(season) {
     </div>
   </section>`);
   parts.push(cheatsSection(season));
+  if (season.beers) parts.push(beerSection(season));
   app.innerHTML = parts.join('');
 
   drawCharts(season);
   wireGrid(season);
-  wireBeers(season);
 }
 
 // Charts are drawn at their real pixel width so text stays readable on phones.
@@ -290,7 +289,10 @@ function detail(n, players, compact = false) {
   ].filter(Boolean);
   const standingLines = [
     ['Quiz-night points', fmt(n.nightPoints)],
-    n.cheats.includes('reinforcements') && n.deduction && ['Reinforcements, deduction back', signed(n.deduction)],
+    n.reinforcementsRelief && [
+      n.reinforcementsRelief < n.deduction ? `Reinforcements, ${fmt(n.reinforcementsRelief)} of ${fmt(n.deduction)} back` : 'Reinforcements, deduction back',
+      signed(n.reinforcementsRelief),
+    ],
     n.tripleExtra && ['Triple joker, joker round again', signed(n.tripleExtra)],
     n.noYouExtra && ['No, you, best minus worst round', signed(n.noYouExtra)],
   ].filter(Boolean);
@@ -512,12 +514,11 @@ function beerSection(season) {
   const b = season.beers;
   const head = `<div class="section-head">
       <h2>BeerTracker</h2>
-      <p>${b.nights ? `How many and what we drank, over ${b.nights} night${b.nights === 1 ? '' : 's'}.` : 'How many and what we drank.'}</p>
+      <p>${b.nights ? `How many we drank, over ${b.nights} night${b.nights === 1 ? '' : 's'}.` : 'How many we drank.'}</p>
     </div>`;
   if (!b.nights) {
     return `<section class="section">${head}<p class="secondary">No beers logged yet this season.</p></section>`;
   }
-  const max = b.types[0]?.count ?? 0;
   // Skip people who weren't at any night where beers were written down.
   const board = b.rows.filter((p) => p.nightsLogged || p.total).map((p) => `<tr>
       <td class="rank num">${p.rank}</td>
@@ -525,11 +526,6 @@ function beerSection(season) {
       <td class="num pts">${fmt(p.total)}</td>
       <td class="num c secondary">${p.perNight != null ? fmt(p.perNight, 1) : '–'}</td>
     </tr>`).join('');
-  const bars = b.types.map((t, i) => `<li class="beer-bar" data-beer="${i}">
-      <span class="bb-name">${esc(t.name)}</span>
-      <span class="bb-track"><span class="bb-fill" style="width:${((t.count / max) * 100).toFixed(1)}%"></span></span>
-      <span class="bb-val num">${fmt(t.count)}</span>
-    </li>`).join('');
   return `<section class="section">
     ${head}
     <dl class="figures beer-figures">
@@ -537,33 +533,13 @@ function beerSection(season) {
       <div><dt>Per night, whole team</dt><dd>${fmt(b.perNight, 1)}</dd></div>
       ${b.record ? `<div><dt>Most in one night</dt><dd>${fmt(b.record.count)} <span class="dd-sub">${recordText(b.record.holders)}</span></dd></div>` : ''}
     </dl>
-    <div class="two-up">
-      <div class="panel beer-board">
-        <table class="sheet league beer-table">
-          <thead><tr><th scope="col" class="rank">#</th><th scope="col">Player</th><th scope="col" class="pts">Beers</th><th scope="col" class="c" title="Per night attended">/night</th></tr></thead>
-          <tbody>${board}</tbody>
-        </table>
-      </div>
-      <div class="panel chart">
-        <h3>What we drink</h3>
-        <p class="sub">All beers this season, most popular first.${b.untyped ? ` ${fmt(b.untyped)} more weren’t recorded by type.` : ''}</p>
-        <ol class="beer-bars">${bars}</ol>
-      </div>
+    <div class="panel beer-board">
+      <table class="sheet league beer-table">
+        <thead><tr><th scope="col" class="rank">#</th><th scope="col">Player</th><th scope="col" class="pts">Beers</th><th scope="col" class="c" title="Per night attended">/night</th></tr></thead>
+        <tbody>${board}</tbody>
+      </table>
     </div>
   </section>`;
-}
-
-function wireBeers(season) {
-  if (!season.beers?.nights) return;
-  app.querySelectorAll('.beer-bar').forEach((li) => {
-    const t = season.beers.types[li.dataset.beer];
-    const who = season.beers.rows
-      .map((p) => ({ name: p.name, count: p.beers.find((x) => x.name === t.name)?.count ?? 0 }))
-      .filter((p) => p.count)
-      .sort((a, b) => b.count - a.count);
-    bindTip(li, `<strong>${esc(t.name)}</strong>
-      ${who.map((p) => `<div class="row"><span>${esc(p.name)}</span><b>${fmt(p.count)}</b></div>`).join('')}`);
-  });
 }
 
 // Attendance -------------------------------------------------------------
@@ -604,7 +580,7 @@ function cheatsSection(season) {
       status = `<p class="status unused">${finished ? 'Not used this season' : 'Still available'}</p>`;
     } else {
       status = used.map((n) => {
-        const gain = key === 'afk' ? n.generalPoints : key === 'tripleJoker' ? n.tripleExtra : key === 'noYou' ? n.noYouExtra : n.deduction;
+        const gain = key === 'afk' ? n.generalPoints : key === 'tripleJoker' ? n.tripleExtra : key === 'noYou' ? n.noYouExtra : n.reinforcementsRelief;
         const label = key === 'afk' ? `${fmt(gain)} points without playing` : `<span class="gain">${signed(gain)}</span> standings points`;
         return `<p class="status">Used on ${esc(n.id)}: ${label}</p>`;
       }).join('');

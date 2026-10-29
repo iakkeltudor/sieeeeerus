@@ -98,7 +98,7 @@ Each night can list who drank what:
 
 Beer names are matched ignoring capitals and extra spaces, so `Ursus` and `ursus ` count as the same beer. The site shows the first spelling it finds. Only nights with a `beers` entry count towards the per-night averages, so a night you forgot to log doesn't pull them down.
 
-If you know each person's total but not which beer they drank, use `"Unknown"` as the beer name for them, and add a separate `beerTypes` with the night's real totals per beer:
+The page only shows how many beers each person drank, not which ones, but the beer names are kept in the data. If you know each person's total but not which beer they drank, use `"Unknown"` as the beer name for them. You can optionally add a separate `beerTypes` with the night's real totals per beer:
 
 ```json
 "beers": {
@@ -108,7 +108,7 @@ If you know each person's total but not which beer they drank, use `"Unknown"` a
 "beerTypes": { "Birra": 18, "Ciuc": 12 }
 ```
 
-Each person's total still counts correctly towards their own numbers and the leaderboard; `beerTypes` only feeds the team-wide "What we drink" chart, so the two aren't double-counted. If both are given, their totals must match — the site flags it if they don't.
+`beerTypes` only shows up as a note in that night's details. If both are given, their totals must match — the site flags it if they don't.
 
 ## Starting a new season
 

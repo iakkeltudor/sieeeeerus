@@ -15,10 +15,12 @@ export const ROUNDS = [
 export const MAX_ROUND_SCORE = 11;
 export const MAX_TEAM_SIZE = 10;
 
+export const REINFORCEMENTS_CAP = 6;
+
 export const CHEATS = {
   reinforcements: {
     name: 'Reinforcements',
-    rule: 'The big-team deduction still applies on the night, but is given back in the general standings.',
+    rule: 'The big-team deduction still applies on the night, but up to 6 points of it are given back in the general standings.',
   },
   tripleJoker: {
     name: 'Triple joker',
@@ -153,12 +155,13 @@ function scoreOne(input) {
   const base = hasRounds ? sum(rounds) : null;
   const jokerScore = hasRounds && night.joker ? rounds[night.joker - 1] : null;
   const deduction = hasRounds ? teamSizeDeduction(night.teamSize) : null;
-  const standingsDeduction = hasRounds ? (cheats.has('reinforcements') ? 0 : deduction) : null;
+  // Reinforcements gives back at most REINFORCEMENTS_CAP points of the deduction in the standings.
+  const reinforcementsRelief = hasRounds && cheats.has('reinforcements') ? Math.min(deduction, REINFORCEMENTS_CAP) : 0;
+  const standingsDeduction = hasRounds ? deduction - reinforcementsRelief : null;
   const tripleExtra = hasRounds && cheats.has('tripleJoker') && jokerScore != null ? jokerScore : 0;
   const best = hasRounds ? Math.max(...rounds) : null;
   const worst = hasRounds ? Math.min(...rounds) : null;
   const noYouExtra = hasRounds && cheats.has('noYou') ? best - worst : 0;
-  const reinforcementsRelief = hasRounds && cheats.has('reinforcements') ? deduction : 0;
 
   let night_ = null;
   let general = null;
@@ -181,6 +184,7 @@ function scoreOne(input) {
     base: tidy(base),
     jokerScore,
     deduction,
+    reinforcementsRelief,
     tripleExtra,
     noYouExtra,
     cheatBenefit: manual != null || hasRounds ? tidy(reinforcementsRelief + tripleExtra + noYouExtra) : null,
