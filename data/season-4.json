@@ -1,6 +1,6 @@
 {
   "season": 4,
-  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras"],
+  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras", "Bebu"],
   "nights": [
     {
       "id": "Quiz 1",
@@ -25,7 +25,7 @@
         "Iakkel": { "Birra": 5, "Ciuc": 1 },
         "Dragos": { "Birra": 5, "Ciuc": 1 },
         "Marc": { "Birra": 5, "Ciuc": 2 },
-        "Muri": { "Birra": 5, "Ciuc": 2 },
+        "Muri": { "Birra": 5, "Ciuc": 1 },
         "Alin": { "Birra": 4, "Ciuc": 1, "Heineken": 1 }
       }
     },
@@ -40,7 +40,13 @@
       "joker": 6,
       "cheats": [],
       "personal": {
-        "night": { "Marc": { "ci": 2 }, "Dragos": { "ci": 10 }, "Claudiu": { "ci": 1 }, "Madaras": { "ci": 2 } }
+        "1": { "Dragos": { "ci": 1 }, "Marc": { "ci": 1 } },
+        "2": { "Claudiu": { "save": 1 } },
+        "3": { "Marc": { "ci": 1 } },
+        "4": { "Dragos": { "ci": 5 } },
+        "6": { "Dragos": { "ci": 2 } },
+        "7": { "Dragos": { "ci": 2 } },
+        "8": { "Madaras": { "ci": 2 } }
       },
       "beers": {
         "Marc": { "Unknown": 7 },
@@ -51,6 +57,35 @@
         "Muri": { "Unknown": 7 }
       },
       "beerTypes": { "Birra": 18, "Ciuc": 12 }
+    },
+    {
+      "id": "Quiz 3",
+      "date": null,
+      "theme": "Politics / Porcarii",
+      "attendees": ["Iakkel", "Marc", "Muri", "Madaras", "Claudiu", "Bebu"],
+      "place": 3,
+      "rounds": [9, 6, 9, 8.66, 11, 11, 11, 9.75],
+      "topics": { "4": "Politics", "5": "Porcarii", "7": "Protests" },
+      "joker": 6,
+      "cheats": [],
+      "personal": {
+        "1": { "Marc": { "ci": 1 }, "Iakkel": { "ci": 1 }, "Bebu": { "ci": 1 } },
+        "2": { "Bebu": { "save": 1 } },
+        "3": { "Marc": { "ci": 0.5 } },
+        "4": { "Iakkel": { "ci": 1 } },
+        "5": { "Bebu": { "ci": 1 } },
+        "6": { "Madaras": { "save": 1 } },
+        "7": { "Claudiu": { "save": 1, "ci": 2 } },
+        "8": { "Madaras": { "ci": 4 }, "Muri": { "ci": 0.5 } }
+      },
+      "beers": {
+        "Iakkel": { "Unknown": 4 },
+        "Marc": { "Unknown": 6 },
+        "Muri": { "Unknown": 5 },
+        "Bebu": { "Unknown": 6 },
+        "Madaras": { "Unknown": 3 },
+        "Claudiu": { "Unknown": 3 }
+      }
     }
   ]
 }

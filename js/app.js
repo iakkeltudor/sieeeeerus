@@ -1,8 +1,8 @@
 // The ?v= on these two imports (and on index.html's links to this file and to styles.css) is a
 // manual cache-buster: GitHub Pages lets browsers cache these files for ~10 minutes, so bump every
 // "v=" by one, in all four places, whenever this file, scoring.js, charts.js or styles.css changes.
-import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=4';
-import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=4';
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=5';
+import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=5';
 
 const app = document.getElementById('app');
 const tabs = document.getElementById('season-tabs');
@@ -546,7 +546,7 @@ function beerSection(season) {
       </div>
       <div class="panel chart">
         <h3>What we drink</h3>
-        <p class="sub">All beers this season, most popular first.</p>
+        <p class="sub">All beers this season, most popular first.${b.untyped ? ` ${fmt(b.untyped)} more weren’t recorded by type.` : ''}</p>
         <ol class="beer-bars">${bars}</ol>
       </div>
     </div>

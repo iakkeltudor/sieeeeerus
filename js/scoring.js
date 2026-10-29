@@ -224,12 +224,16 @@ export function scoreSeason(season) {
 // drink" tally directly instead of through any person, so it's additive with (not double-counted
 // against) whatever placeholder counts are in that night's `beers`.
 const beerKey = (name) => name.trim().toLowerCase();
+// "Unknown" means the type wasn't written down: it counts towards people's totals but
+// never appears as a beer in the team-wide "what we drink" tally.
+const UNKNOWN_BEER = 'unknown';
 
 export function beerStats(players, nights) {
   if (!Array.isArray(players) || !players.length) return null;
   const logged = nights.filter((n) => n.played && n.beers && typeof n.beers === 'object');
   const types = new Map(); // key -> count, the team-wide "what we drink" tally
   const names = new Map(); // key -> first-seen spelling, from any source
+  let untyped = 0; // beers logged as "Unknown" on nights without a beerTypes split
   let record = null;
 
   const seen = (beer) => {
@@ -256,7 +260,8 @@ export function beerStats(players, nights) {
         const k = seen(beer);
         tonight += count;
         mine.set(k, (mine.get(k) ?? 0) + count);
-        if (!n.beerTypes) types.set(k, (types.get(k) ?? 0) + count);
+        if (!n.beerTypes && k !== UNKNOWN_BEER) types.set(k, (types.get(k) ?? 0) + count);
+        if (!n.beerTypes && k === UNKNOWN_BEER) untyped += count;
       }
       total += tonight;
       if (tonight && (!record || tonight > record.count)) record = { count: tonight, holders: [] };
@@ -293,6 +298,7 @@ export function beerStats(players, nights) {
     perNight: logged.length ? tidy(total / logged.length) : null,
     record,
     rows,
+    untyped,
     types: [...types.entries()].map(([key, count]) => ({ name: names.get(key), count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
   };

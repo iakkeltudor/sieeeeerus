@@ -120,10 +120,11 @@ test('season 4 personal standings after quiz 1', () => {
   assert.deepEqual(rows, [[1, 'Dragos', 9], [2, 'Iakkel', 3], [3, 'Marc', 1], [4, 'Muri', 1], [4, 'Alin', 1]]);
 });
 
-test('season 4 quiz 2 totals 89 and counts night-level personal points', () => {
+test('season 4 quiz 2 totals 89 and its personal points add up by round', () => {
   const raw = load('season-4.json');
   for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
-  const s4 = scoreSeason(raw);
+  // Only Quiz 1 and 2, so later nights don't change these numbers.
+  const s4 = scoreSeason({ ...raw, nights: raw.nights.filter((n) => ['Quiz 1', 'Quiz 2'].includes(n.id)) });
   const q2 = s4.nights.find((n) => n.id === 'Quiz 2');
   assert.equal(q2.teamSize, 7);
   assert.equal(q2.deduction, 1);
@@ -131,22 +132,45 @@ test('season 4 quiz 2 totals 89 and counts night-level personal points', () => {
   assert.equal(q2.nightPoints, 89);
   const rows = Object.fromEntries(s4.personal.rows.map((p) => [p.name, p]));
   assert.equal(rows.Dragos.points, 19);
-  assert.equal(rows.Dragos.unassigned, 10);
+  assert.equal(rows.Dragos.unassigned, 0);
+  assert.deepEqual(rows.Dragos.byRound, { 1: 2, 2: 2, 3: 0, 4: 5, 5: 3, 6: 2, 7: 4, 8: 1 });
   assert.equal(rows.Dragos.played, 2);
+  assert.equal(rows.Marc.points, 3);
+  assert.equal(rows.Claudiu.points, 1.5); // a save, not a CI
   assert.equal(rows.Madaras.points, 2);
   assert.equal(rows.Iakkel.played, 1);
   // Quiz 2's beers are logged as totals-only (no per-person type), via beerTypes.
   assert.equal(s4.beers.nights, 2);
 });
 
-test('season 4 beers after quiz 1 (Marc and Muri both drank 7)', () => {
+test('season 4 quiz 3 totals 86.41, with half CIs and beers without a type', () => {
+  const raw = load('season-4.json');
+  for (const n of raw.nights) assert.deepEqual(validateNight(n, raw.players), [], n.id);
+  const s4 = scoreSeason(raw);
+  const q3 = s4.nights.find((n) => n.id === 'Quiz 3');
+  assert.equal(q3.teamSize, 6);
+  assert.equal(q3.deduction, 0);
+  assert.equal(q3.base, 75.41);
+  assert.equal(q3.nightPoints, 86.41);
+  const p = (name) => s4.personal.rows.find((r) => r.name === name);
+  assert.equal(p('Bebu').points, 3.5); // 2 CI + 1 save
+  assert.equal(p('Madaras').points, 7.5); // Quiz 2: 2, Quiz 3: 4 CI + 1 save
+  assert.equal(p('Claudiu').points, 5); // Quiz 2: 1.5, Quiz 3: 2 CI + 1 save
+  assert.equal(p('Marc').points, 4.5);
+  // Quiz 3's 27 beers count for people but stay out of the "what we drink" chart.
+  assert.equal(s4.beers.total, 88);
+  assert.equal(s4.beers.untyped, 27);
+  assert.deepEqual(s4.beers.types.map((t) => t.name), ['Birra', 'Ciuc', 'Heineken']);
+});
+
+test('season 4 beers after quiz 1 (Marc drank the most, 7)', () => {
   const raw = load('season-4.json');
   const b = scoreSeason({ ...raw, nights: raw.nights.filter((n) => n.id === 'Quiz 1') }).beers;
-  assert.equal(b.total, 32);
-  assert.deepEqual(b.record, { count: 7, holders: [{ player: 'Marc', night: 'Quiz 1' }, { player: 'Muri', night: 'Quiz 1' }] });
-  assert.deepEqual(b.types, [{ name: 'Birra', count: 24 }, { name: 'Ciuc', count: 7 }, { name: 'Heineken', count: 1 }]);
+  assert.equal(b.total, 31);
+  assert.deepEqual(b.record, { count: 7, holders: [{ player: 'Marc', night: 'Quiz 1' }] });
+  assert.deepEqual(b.types, [{ name: 'Birra', count: 24 }, { name: 'Ciuc', count: 6 }, { name: 'Heineken', count: 1 }]);
   assert.deepEqual(b.rows.filter((r) => r.nightsLogged).map((r) => [r.rank, r.name, r.total]),
-    [[1, 'Marc', 7], [1, 'Muri', 7], [3, 'Iakkel', 6], [3, 'Dragos', 6], [3, 'Alin', 6]]);
+    [[1, 'Marc', 7], [2, 'Iakkel', 6], [2, 'Dragos', 6], [2, 'Muri', 6], [2, 'Alin', 6]]);
 });
 
 test('season 4 beers: quiz 2 known as team totals only (18 Birra, 12 Ciuc), still add up to 30', () => {
@@ -155,10 +179,10 @@ test('season 4 beers: quiz 2 known as team totals only (18 Birra, 12 Ciuc), stil
   const personTotal = Object.values(q2.beers).reduce((a, d) => a + Object.values(d).reduce((x, y) => x + y, 0), 0);
   assert.equal(personTotal, 30);
   assert.deepEqual(q2.beerTypes, { Birra: 18, Ciuc: 12 });
-  const full = scoreSeason(raw).beers;
+  const full = scoreSeason({ ...raw, nights: raw.nights.filter((n) => ['Quiz 1', 'Quiz 2'].includes(n.id)) }).beers;
   // Season totals combine Quiz 1's real per-person types with Quiz 2's team-only split.
-  assert.equal(full.total, 62);
-  assert.deepEqual(full.types, [{ name: 'Birra', count: 42 }, { name: 'Ciuc', count: 19 }, { name: 'Heineken', count: 1 }]);
+  assert.equal(full.total, 61);
+  assert.deepEqual(full.types, [{ name: 'Birra', count: 42 }, { name: 'Ciuc', count: 18 }, { name: 'Heineken', count: 1 }]);
   const rows = Object.fromEntries(full.rows.map((p) => [p.name, p]));
   assert.equal(rows.Marc.total, 14); // 7 on Quiz 1 + 7 on Quiz 2
   assert.equal(rows.Madaras.total, 5); // only played Quiz 2
