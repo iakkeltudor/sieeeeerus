@@ -177,6 +177,92 @@ export function roundsChart(rounds, W = 560) {
   return svg;
 }
 
+// The race: running personal points per quiz --------------------------------
+// Colour slots in the validated categorical order; everyone outside the top five is grey.
+export const RACE_COLOURS = ['--race-1', '--race-2', '--race-3', '--race-4', '--race-5'];
+
+// The people who get a colour: the current top five with points, leader first.
+export function raceTop(data, n = RACE_COLOURS.length) {
+  return [...data.series]
+    .filter((s) => s.points.at(-1) > 0)
+    .sort((a, b) => b.points.at(-1) - a.points.at(-1) || a.start - b.start)
+    .slice(0, n);
+}
+
+export function raceChart(data, W = 560) {
+  const { nights, series } = data;
+  const H = 300;
+  const m = { l: 34, r: 84, t: 14, b: 44 };
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Running personal points after each quiz' });
+  if (!series.length || nights.length < 2) return svg;
+
+  const top = raceTop(data);
+  const slot = new Map(top.map((s, i) => [s.name, i]));
+  const colour = (s) => (slot.has(s.name) ? `var(${RACE_COLOURS[slot.get(s.name)]})` : 'var(--axis)');
+
+  const values = series.flatMap((s) => s.points.slice(s.start));
+  const ticks = niceTicks(Math.min(0, ...values), Math.max(1, ...values));
+  const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+  const x = (i) => m.l + (i * (W - m.l - m.r)) / (nights.length - 1);
+  const y = (v) => m.t + ((y1 - v) / (y1 - y0)) * (H - m.t - m.b);
+
+  for (const t of ticks) {
+    el('line', { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), class: t === 0 ? 'baseline' : 'gridline' }, svg);
+    el('text', { x: m.l - 8, y: y(t) + 4, 'text-anchor': 'end' }, svg).textContent = t;
+  }
+  nights.forEach((id, i) => {
+    el('text', { x: x(i), y: H - m.b + 18, 'text-anchor': 'middle' }, svg).textContent = shortId(id);
+  });
+  el('text', { x: (m.l + W - m.r) / 2, y: H - 4, 'text-anchor': 'middle', class: 'label' }, svg).textContent = 'Quiz';
+
+  const cross = el('line', { y1: m.t, y2: H - m.b, class: 'crosshair', visibility: 'hidden' }, svg);
+
+  // Grey lines first, then the coloured ones with the leader drawn last so it sits on top.
+  const ordered = [...series.filter((s) => !slot.has(s.name)), ...[...top].reverse()];
+  for (const s of ordered) {
+    const pts = s.points.map((v, i) => [i, v]).slice(s.start);
+    const coloured = slot.has(s.name);
+    if (pts.length > 1) {
+      el('path', {
+        d: pts.map(([i, v], k) => `${k ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(''),
+        fill: 'none', stroke: colour(s), 'stroke-width': coloured ? 2 : 1.5,
+        'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: coloured ? 1 : 0.7,
+      }, svg);
+    }
+    const [li, lv] = pts[pts.length - 1];
+    el('circle', { cx: x(li), cy: y(lv), r: coloured ? 4.5 : 3, fill: colour(s), stroke: 'var(--surface)', 'stroke-width': 2 }, svg);
+  }
+
+  // End labels for the coloured lines, skipping any that would collide with one already placed.
+  const placed = [];
+  for (const s of [...top].sort((a, b) => y(a.points.at(-1)) - y(b.points.at(-1)))) {
+    const ly = y(s.points.at(-1)) + 4;
+    if (placed.some((p) => Math.abs(p - ly) < 14)) continue;
+    placed.push(ly);
+    el('text', { x: x(nights.length - 1) + 9, y: ly, class: 'label strong' }, svg).textContent = s.name;
+  }
+
+  // Hover bands, one per quiz, listing everyone who had started by then.
+  const band = x(1) - x(0);
+  nights.forEach((id, i) => {
+    const hit = el('rect', { x: x(i) - band / 2, y: m.t, width: band, height: H - m.t - m.b, class: 'hit' }, svg);
+    hit.addEventListener('pointerenter', () => {
+      cross.setAttribute('x1', x(i));
+      cross.setAttribute('x2', x(i));
+      cross.setAttribute('visibility', 'visible');
+    });
+    hit.addEventListener('pointerleave', () => cross.setAttribute('visibility', 'hidden'));
+    bindTip(hit, () => {
+      const rows = series.filter((s) => s.start <= i).sort((a, b) => b.points[i] - a.points[i]);
+      return `<strong>After ${esc(id)}</strong>
+        ${rows.map((s) => `<div class="row"><span><i style="background:${colour(s)}"></i>${esc(s.name)}</span><b>${fmt(s.points[i])}</b></div>`).join('')}`;
+    });
+  });
+  return svg;
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
 export function ordinal(n) {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;

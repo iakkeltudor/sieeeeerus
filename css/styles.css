@@ -17,6 +17,12 @@
   --good-fill: #0ca30c;
   --bad-fill: #d03b3b;
   --bad-text: #b52a2a;
+  /* Race chart: the first five categorical slots, in their validated order. */
+  --race-1: #2a78d6;
+  --race-2: #eb6834;
+  --race-3: #1baf7a;
+  --race-4: #eda100;
+  --race-5: #e87ba4;
 
   --display: "Bricolage Grotesque", system-ui, sans-serif;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -38,6 +44,11 @@
     --good: #0ca30c;
     --neg: #e66767;
     --bad-text: #e66767;
+    --race-1: #3987e5;
+    --race-2: #d95926;
+    --race-3: #199e70;
+    --race-4: #c98500;
+    --race-5: #d55181;
   }
 }
 
@@ -90,7 +101,17 @@ button { font: inherit; color: inherit; }
 }
 .tagline { margin-top: 14px; color: var(--ink-2); font-size: 1.1rem; }
 
-.seasons { display: flex; gap: 8px; margin-top: 28px; flex-wrap: wrap; }
+/* Sticky bar: season tabs always in reach; jump links on phones. */
+.stickybar {
+  position: sticky; top: 0; z-index: 6; padding: 10px 0;
+  background: color-mix(in srgb, var(--page) 90%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--grid);
+}
+.stickybar-inner { display: flex; flex-direction: column; gap: 8px; }
+.jump { display: none; }
+.section, .stat-panel { scroll-margin-top: 72px; }
+.seasons { display: flex; gap: 8px; flex-wrap: wrap; }
 .seasons button {
   border: 1px solid var(--axis);
   background: transparent;
@@ -171,14 +192,16 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 .total-cell { text-align: right; font-variant-numeric: tabular-nums; padding: 0 8px; white-space: nowrap; }
 .total-cell .boost { display: block; font-size: 0.78rem; color: var(--good); font-weight: 600; }
 .place { font-weight: 700; }
-/* Medal badges keep dark ink in both themes: all three fills are light enough for it. */
-.place.medal {
-  display: inline-block; border-radius: 999px; padding: 1px 10px; color: #13233a;
+/* Medals keep dark ink in both themes: all three fills are light enough for it. */
+.medal {
+  display: inline-block; color: #13233a; font-weight: 700;
   box-shadow: inset 0 0 0 1px rgba(19, 35, 58, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
-.place.gold { background: linear-gradient(135deg, #fbe39a, #e0aa2a); }
-.place.silver { background: linear-gradient(135deg, #f1f3f6, #b4bac4); }
-.place.bronze { background: linear-gradient(135deg, #f0c193, #c07d43); }
+.medal.gold { background: linear-gradient(135deg, #fbe39a, #e0aa2a); }
+.medal.silver { background: linear-gradient(135deg, #f1f3f6, #b4bac4); }
+.medal.bronze { background: linear-gradient(135deg, #f0c193, #c07d43); }
+.place.medal { border-radius: 999px; padding: 1px 10px; }
+.rank-medal { width: 24px; height: 24px; line-height: 24px; border-radius: 50%; text-align: center; font-size: 0.85rem; }
 
 .detail-row > td { padding: 4px 6px 16px; }
 .detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 32px; padding: 14px 16px; border-radius: 8px; background: var(--page); font-size: 0.92rem; }
@@ -294,6 +317,41 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
   .cheat + .cheat { border-top: 1px solid var(--grid); }
 }
 
+/* The race chart sits under the league table. */
+.chart.race { margin-top: 20px; }
+
+/* Stats -------------------------------------------------------------------- */
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .stat-grid { grid-template-columns: minmax(0, 1fr); } }
+.stat-panel { padding: 18px 18px 14px; }
+.stat-panel h3 { margin-bottom: 4px; }
+.stat-panel .sub { color: var(--ink-2); font-size: 0.9rem; margin-bottom: 12px; }
+.stat-line { font-size: 0.92rem; margin-bottom: 12px; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.stat-table th, .stat-table td { padding: 7px 8px; border-bottom: 1px solid var(--grid); text-align: left; white-space: nowrap; }
+.stat-table thead th { font-size: 0.8rem; font-weight: 600; color: var(--ink-2); border-bottom-color: var(--axis); }
+.stat-table tbody tr:last-child > * { border-bottom: 0; }
+.stat-table tbody th { font-weight: 600; }
+.stat-table .c { text-align: center; }
+.stat-table .r { text-align: right; }
+.stat-table .share { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.stat-table thead .share { display: table-cell; }
+.stat-table .bar { flex: 1; height: 8px; border-radius: 0 4px 4px 0; background: var(--grid); overflow: hidden; }
+.stat-table .bar i { display: block; height: 100%; background: var(--series-1); border-radius: 0 4px 4px 0; }
+.stat-table .share .num { width: 38px; text-align: right; }
+
+.joker-figures { display: flex; flex-wrap: wrap; gap: 12px 32px; margin-bottom: 12px; }
+.jf-value { display: block; font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.jf-label { display: block; font-size: 0.82rem; color: var(--ink-2); }
+.joker-chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.joker-chip { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; padding: 8px 10px; border-radius: 8px; background: var(--page); font-size: 0.85rem; }
+.jc-id { font-weight: 700; }
+.jc-round { color: var(--ink-2); text-align: right; }
+.jc-score { color: var(--ink-2); }
+.jc-mark { text-align: right; font-weight: 600; }
+.joker-chip.hit .jc-mark { color: var(--good); }
+.joker-chip.miss .jc-mark { color: var(--bad-text); }
+
 /* Personal points matrix: season / per-quiz switcher ---------------------- */
 .matrix-tabs {
   display: flex; gap: 4px; margin-bottom: 14px; padding: 4px; width: fit-content; max-width: 100%;
@@ -328,7 +386,25 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 
   .masthead { padding: 32px 0 20px; }
   .tagline { margin-top: 8px; font-size: 1rem; }
-  .seasons { margin-top: 18px; }
+
+  /* Sticky bar: compact season tabs, then a scrolling row of jump links. */
+  .stickybar { padding: 8px 0; }
+  .seasons { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .seasons button { flex: none; padding: 5px 12px; font-size: 0.9rem; }
+  .jump { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px; }
+  .jump::-webkit-scrollbar, .seasons::-webkit-scrollbar { display: none; }
+  .jump a {
+    flex: none; padding: 4px 11px; border-radius: 999px; font-size: 0.82rem; font-weight: 600;
+    color: var(--ink-2); text-decoration: none; background: var(--surface); box-shadow: 0 0 0 1px var(--ring);
+  }
+  .section, .stat-panel { scroll-margin-top: 104px; }
+  .stat-panel { padding: 14px 12px 10px; }
+  /* Stats tables fit the screen: wrap headers, drop the share bars and optional columns. */
+  .stat-table { font-size: 0.86rem; }
+  .stat-table th, .stat-table td { padding: 7px 5px; white-space: normal; }
+  .stat-table thead th { white-space: normal; line-height: 1.2; vertical-align: bottom; }
+  .stat-table .bar, .stat-table .opt { display: none; }
+  .stat-table .share { min-width: 0; justify-content: flex-end; }
   .section { padding: 28px 0; }
   .section-head { margin-bottom: 14px; }
   .section-head p { font-size: 0.92rem; }

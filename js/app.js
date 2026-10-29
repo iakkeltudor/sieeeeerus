@@ -1,11 +1,13 @@
 // The ?v= on these two imports (and on index.html's links to this file and to styles.css) is a
 // manual cache-buster: GitHub Pages lets browsers cache these files for ~10 minutes, so bump every
 // "v=" by one, in all four places, whenever this file, scoring.js, charts.js or styles.css changes.
-import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=6';
-import { fmt, ordinal, shortId, pointsChart, roundsChart, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=6';
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=7';
+import { fmt, ordinal, shortId, pointsChart, roundsChart, raceChart, raceTop, RACE_COLOURS, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=7';
+import { race, specialists, teamSize, partnerships, beersVsBrains, streaks, jokers } from './stats.js?v=7';
 
 const app = document.getElementById('app');
 const tabs = document.getElementById('season-tabs');
+const jump = document.getElementById('jump-links');
 let seasons = [];
 let index = null;
 
@@ -82,14 +84,16 @@ function render(season) {
     parts.push(cheatsSection(season));
     app.innerHTML = parts.join('');
     app.querySelector('[data-goto]')?.addEventListener('click', (e) => { location.hash = `season-${e.target.dataset.goto}`; });
+    renderJump();
     return;
   }
 
   parts.push(summarySection(season));
   parts.push(gridSection(season));
   if (season.personal) parts.push(personalSection(season));
+  parts.push(statsSection(season));
   if (season.attendance?.tracked) parts.push(attendanceSection(season));
-  parts.push(`<section class="section two-up">
+  parts.push(`<section class="section two-up" id="charts" data-jump="Charts">
     <div class="panel chart" id="points-chart">
       <h3>Points per night</h3>
       <p class="sub">Season cheats lift a night above its quiz-night score in the general standings.</p>
@@ -110,11 +114,28 @@ function render(season) {
   drawCharts(season);
   wireGrid(season);
   wireMatrix();
+  renderJump();
+}
+
+// Jump links in the sticky bar (shown on phones), built from whichever sections are on the page.
+function renderJump() {
+  const sections = [...app.querySelectorAll('section[data-jump]')];
+  jump.innerHTML = sections.map((s) => `<a href="#${s.id}" data-target="${s.id}">${esc(s.dataset.jump)}</a>`).join('');
+  jump.querySelectorAll('a').forEach((a) => a.addEventListener('click', (e) => {
+    // Scroll without touching the URL hash, which holds the season.
+    e.preventDefault();
+    document.getElementById(a.dataset.target)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }));
 }
 
 // Charts are drawn at their real pixel width so text stays readable on phones.
 function drawCharts(season) {
-  for (const [id, draw] of [['points-chart', (w) => pointsChart(season.nights, w)], ['rounds-chart', (w) => roundsChart(season.rounds, w)]]) {
+  const charts = [
+    ['points-chart', (w) => pointsChart(season.nights, w)],
+    ['rounds-chart', (w) => roundsChart(season.rounds, w)],
+    ['race-chart', (w) => raceChart(race(season), w)],
+  ];
+  for (const [id, draw] of charts) {
     const box = app.querySelector(`#${id}`);
     if (!box) continue;
     box.querySelector('svg')?.remove();
@@ -165,7 +186,7 @@ function gridSection(season) {
   const head = ROUNDS.map((r) => `<th class="round" scope="col">R${r.n}<span>${r.weekly ? 'weekly' : esc(r.name)}</span></th>`).join('');
   const rows = season.nights.map((n, i) => nightRow(n, i, season.players)).join('');
   const swatches = rampSwatches().map((c) => `<i style="background:${c}"></i>`).join('');
-  return `<section class="section">
+  return `<section class="section" id="nights" data-jump="Nights">
     <div class="section-head">
       <h2>Night by night</h2>
       <p>Each square is one round, scored out of ${MAX_ROUND_SCORE}. Select a night to see how its total was worked out.</p>
@@ -364,13 +385,20 @@ function formMarks(form) {
 }
 const formCell = (form) => `<td class="form">${formMarks(form)}</td>`;
 
+// Gold, silver and bronze for the top three positions (shared on a tie), once they have points.
+const rankMark = (p, started) => {
+  if (!started) return '<span class="muted">–</span>';
+  const medal = p.points > 0 ? MEDALS[p.rank] : null;
+  return medal ? `<span class="medal rank-medal ${medal}" aria-label="${ordinal(p.rank)}">${p.rank}</span>` : p.rank;
+};
+
 // Phone layout for one league row: position, name and points up top, the breakdown below.
 function leagueCard(p, started) {
   const move = started ? moveMark(p.move) : '';
   const form = formMarks(p.form);
   const stat = (label, value) => `<span><span class="muted">${label}</span> ${value}</span>`;
   return `<li class="league-card">
-      <span class="lc-rank num">${started ? p.rank : '–'}</span>
+      <span class="lc-rank num">${rankMark(p, started)}</span>
       <span class="lc-move">${move}</span>
       <span class="lc-name">${esc(p.name)}</span>
       <span class="lc-pts num">${started ? fmt(p.points) : '–'}<small>pts</small></span>
@@ -392,7 +420,7 @@ function personalSection(season) {
   const started = nights > 0;
   const dash = '<span class="muted">–</span>';
   const body = rows.map((p) => `<tr>
-      <td class="rank num">${started ? p.rank : dash}</td>
+      <td class="rank num">${rankMark(p, started)}</td>
       ${started ? moveCell(p.move) : '<td class="move"></td>'}
       <th scope="row" class="att-name">${esc(p.name)}</th>
       <td class="num c">${p.played}</td>
@@ -404,7 +432,7 @@ function personalSection(season) {
       <td class="num pts">${started ? fmt(p.points) : dash}</td>
       <td class="num c secondary">${started && p.perNight != null ? fmt(p.perNight) : dash}</td>
     </tr>`).join('');
-  return `<section class="section">
+  return `<section class="section" id="standings" data-jump="Standings">
     <div class="section-head">
       <h2>Personal standings</h2>
       <p>${started
@@ -430,7 +458,132 @@ function personalSection(season) {
         <tbody>${body}</tbody>
       </table>
     </div>
+    ${started && nights > 1 ? raceSection(season) : ''}
   </section>${started ? byRoundSection(season) : ''}`;
+}
+
+// Stats ------------------------------------------------------------------
+const pct = (x) => `${Math.round(x * 100)}%`;
+const statPanel = (title, sub, body) => `<div class="panel stat-panel">
+    <h3>${title}</h3>
+    <p class="sub">${sub}</p>
+    ${body}
+  </div>`;
+const statTable = (head, rows) => `<div class="sheet-scroll"><table class="stat-table">
+    <thead><tr>${head.map(([label, cls = '']) => `<th scope="col" class="${cls}">${label}</th>`).join('')}</tr></thead>
+    <tbody>${rows.join('')}</tbody>
+  </table></div>`;
+
+function statsSection(season) {
+  const panels = [];
+
+  const spec = specialists(season);
+  if (spec.length) {
+    panels.push(statPanel('Specialists', 'Each person’s strongest round, and their share of the team’s CIs.', statTable(
+      [['Player'], ['Best round'], ['Share of CIs', 'share']],
+      spec.map((s) => {
+        const round = s.best
+          ? `R${s.best.round} ${s.best.weekly && s.best.topics?.length ? esc(s.best.topics.join(', ')) : esc(s.best.name)} <span class="secondary">${pointsText(s.best.points)}</span>`
+          : '<span class="muted">–</span>';
+        return `<tr><th scope="row">${esc(s.name)}</th><td>${round}</td>
+          <td class="share"><span class="bar"><i style="width:${((s.ciShare ?? 0) * 100).toFixed(1)}%"></i></span><span class="num">${s.ciShare != null ? pct(s.ciShare) : '–'}</span></td></tr>`;
+      }),
+    )));
+  }
+
+  const size = teamSize(season);
+  if (size.groups.length) {
+    let line = '';
+    if (size.small && size.big) {
+      const before = size.big.raw - size.small.raw;
+      const after = size.big.onNight - size.small.onNight;
+      line = `<p class="stat-line">Teams of 7 or more scored <b>${signed(tidyNum(before))}</b> points a night before the deduction, and <b>${signed(tidyNum(after))}</b> after it, compared with teams of 6 or fewer.</p>`;
+    }
+    panels.push(statPanel('Team size vs score', '“Raw” is the score before the big-team deduction.', `${line}${statTable(
+      [['People'], ['Nights', 'c'], ['Raw', 'r'], ['On the night', 'r'], ['Wins', 'c']],
+      size.groups.map((g) => `<tr><th scope="row">${g.size}</th><td class="c num">${g.nights}</td><td class="r num">${fmt(g.raw)}</td><td class="r num">${fmt(g.onNight)}</td><td class="c num">${g.wins}</td></tr>`),
+    )}`));
+  }
+
+  const pairs = partnerships(season);
+  if (pairs.length) {
+    panels.push(statPanel('Partnerships', 'The pairs who’ve been to the most quizzes together, and how the team did.', statTable(
+      [['Pair'], ['Nights', 'c'], ['Wins', 'c'], ['Avg place', 'c opt'], ['Avg score', 'r']],
+      pairs.map((p) => `<tr><th scope="row">${esc(p.a)} &amp; ${esc(p.b)}</th><td class="c num">${p.nights}</td><td class="c num">${p.wins}</td>
+        <td class="c num opt">${p.avgPlace != null ? fmt(p.avgPlace, 1) : '–'}</td><td class="r num">${fmt(p.avg, 1)}</td></tr>`),
+    )));
+  }
+
+  const bb = beersVsBrains(season);
+  if (bb.rows.length) {
+    let line = '';
+    if (bb.team.length > 1) {
+      const most = [...bb.team].sort((a, b) => b.beers - a.beers)[0];
+      const fewest = [...bb.team].sort((a, b) => a.beers - b.beers)[0];
+      const night = (n) => `${esc(n.id)} (${fmt(n.beers)} beers): ${fmt(n.score)} points${n.place ? `, ${ordinal(n.place)}` : ''}`;
+      line = `<p class="stat-line">Most beers: ${night(most)}. Fewest: ${night(fewest)}.</p>`;
+    }
+    panels.push(statPanel('Beers vs brains', `Personal points per beer, over the ${bb.nights} night${bb.nights === 1 ? '' : 's'} with beers logged.`, `${line}${statTable(
+      [['Player'], ['Beers', 'c'], ['Points', 'c'], ['Per beer', 'r']],
+      bb.rows.map((r) => `<tr><th scope="row">${esc(r.name)}</th><td class="c num">${fmt(r.beers)}</td><td class="c num">${fmt(r.points)}</td><td class="r num"><b>${fmt(r.perBeer, 2)}</b></td></tr>`),
+    )}`));
+  }
+
+  const st = streaks(season);
+  if (st.length) {
+    const run = (cur, best) => `${cur}${best > cur ? ` <span class="secondary">(best ${best})</span>` : ''}`;
+    panels.push(statPanel('Streaks', 'Current runs, with the season best in brackets when it was longer.', statTable(
+      [['Player'], ['Quizzes in a row', 'c'], ['Scoring in a row', 'c'], ['Since a lacheala', 'c']],
+      st.map((s) => `<tr><th scope="row">${esc(s.name)}</th><td class="c num">${run(s.currentAttend, s.longestAttend)}</td>
+        <td class="c num">${run(s.currentScoring, s.longestScoring)}</td>
+        <td class="c">${s.sinceLacheala == null ? '<span class="secondary">Never</span>' : `${s.sinceLacheala} quiz${s.sinceLacheala === 1 ? '' : 'zes'}`}</td></tr>`),
+    )));
+  }
+
+  const j = jokers(season);
+  if (j.played) {
+    const prev = seasons.find((s) => s.season === season.season - 1 && s.summary.jokersPlayed);
+    const fav = j.favourite;
+    const favLine = fav && fav.count === j.played && j.played > 1
+      ? `Every joker this season went on round ${fav.round}.`
+      : fav && fav.count > 1 ? `Favourite round: ${fav.round} (${fav.count} of ${j.played}).` : '';
+    const chips = j.nights.map((n) => `<li class="joker-chip ${n.hit ? 'hit' : 'miss'}">
+        <span class="jc-id">${esc(shortId(n.id))}</span>
+        <span class="jc-round">R${n.round}</span>
+        <span class="jc-score num">${fmt(n.score)}/${fmt(n.best)}</span>
+        <span class="jc-mark">${n.hit ? '✓ best' : `✗ ${signed(n.score - n.best)}`}</span>
+      </li>`).join('');
+    panels.push(statPanel('Joker accuracy', 'Did the joker go on our best round of the night?', `
+      <div class="joker-figures">
+        <div><span class="jf-value">${j.onBest} of ${j.played}</span><span class="jf-label">on the best round</span></div>
+        <div><span class="jf-value">${j.efficiency != null ? pct(j.efficiency) : '–'}</span><span class="jf-label">of the possible joker points</span></div>
+        ${prev ? `<div><span class="jf-value secondary">${prev.summary.jokersOnBest} of ${prev.summary.jokersPlayed}</span><span class="jf-label">in Season ${prev.season} (${pct(prev.summary.jokerEfficiency)})</span></div>` : ''}
+      </div>
+      ${favLine ? `<p class="stat-line">${favLine}</p>` : ''}
+      <ol class="joker-chips">${chips}</ol>`));
+  }
+
+  if (!panels.length) return '';
+  return `<section class="section" id="stats" data-jump="Stats">
+    <div class="section-head">
+      <h2>Stats</h2>
+      <p>A few numbers to argue about at the table.</p>
+    </div>
+    <div class="stat-grid">${panels.join('')}</div>
+  </section>`;
+}
+
+const tidyNum = (x) => Math.round(x * 100) / 100;
+
+// Running personal points per quiz. The current top five get colour; everyone else is grey.
+function raceSection(season) {
+  const top = raceTop(race(season));
+  const legend = top.map((s, i) => `<span><i style="background:var(${RACE_COLOURS[i]})"></i>${esc(s.name)}</span>`).join('');
+  return `<div class="panel chart race" id="race-chart">
+      <h3>The race</h3>
+      <p class="sub">Running personal points after each quiz. The top five are in colour; hover or tap a quiz to see everyone.</p>
+      <div class="legend">${legend}<span><i style="background:var(--axis)"></i>Everyone else</span></div>
+    </div>`;
 }
 
 // Players × rounds: who carries which round. Diverging tint: blue up, red down.
@@ -507,7 +660,7 @@ function byRoundSection(season) {
       <div class="panel sheet-scroll fit">${v.html}</div>
       <p class="matrix-note secondary">${v.note}</p>
     </div>`).join('');
-  return `<section class="section" id="matrix">
+  return `<section class="section" id="matrix" data-jump="By round">
     <div class="section-head">
       <h2>Personal points by round</h2>
       <p>Blue is a net gain, red a net loss. Pick a quiz to see that night on its own.</p>
@@ -596,7 +749,7 @@ function beerSection(season) {
       <p>${b.nights ? `How many we drank, over ${b.nights} night${b.nights === 1 ? '' : 's'}.` : 'How many we drank.'}</p>
     </div>`;
   if (!b.nights) {
-    return `<section class="section">${head}<p class="secondary">No beers logged yet this season.</p></section>`;
+    return `<section class="section" id="beers" data-jump="Beers">${head}<p class="secondary">No beers logged yet this season.</p></section>`;
   }
   // Skip people who weren't at any night where beers were written down.
   const board = b.rows.filter((p) => p.nightsLogged || p.total).map((p) => `<tr>
@@ -605,7 +758,7 @@ function beerSection(season) {
       <td class="num pts">${fmt(p.total)}</td>
       <td class="num c secondary">${p.perNight != null ? fmt(p.perNight, 1) : '–'}</td>
     </tr>`).join('');
-  return `<section class="section">
+  return `<section class="section" id="beers" data-jump="Beers">
     ${head}
     <dl class="figures beer-figures">
       <div><dt>Beers this season</dt><dd>${fmt(b.total)}</dd></div>
@@ -635,7 +788,7 @@ function attendanceSection(season) {
     return `<tr><th scope="row" class="att-name">${esc(p.name)}</th>${cells}<td class="total-cell">${p.count} of ${tracked}</td></tr>`;
   }).join('');
   const guests = nights.reduce((a, n) => a + (n.guests ?? 0), 0);
-  return `<section class="section">
+  return `<section class="section" id="attendance" data-jump="Who went">
     <div class="section-head">
       <h2>Who went</h2>
       <p>Not all of us make every quiz.${guests ? ` Guests came along ${guests} time${guests === 1 ? '' : 's'} this season.` : ''}</p>
@@ -666,7 +819,7 @@ function cheatsSection(season) {
     }
     return `<div class="cheat"><h3>${esc(c.name)}</h3><p class="rule">${esc(c.rule)}</p>${status}</div>`;
   }).join('');
-  return `<section class="section">
+  return `<section class="section" id="cheats" data-jump="Cheats">
     <div class="section-head">
       <h2>Season cheats</h2>
       <p>Each cheat can be played once a season.</p>
