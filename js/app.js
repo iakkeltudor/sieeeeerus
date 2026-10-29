@@ -109,6 +109,7 @@ function render(season) {
 
   drawCharts(season);
   wireGrid(season);
+  wireMatrix();
 }
 
 // Charts are drawn at their real pixel width so text stays readable on phones.
@@ -186,6 +187,10 @@ function gridSection(season) {
   </section>`;
 }
 
+// Gold, silver and bronze for the top three places; any other place is plain text.
+const MEDALS = { 1: 'gold', 2: 'silver', 3: 'bronze' };
+const placeBadge = (place) => `<span class="place${MEDALS[place] ? ` medal ${MEDALS[place]}` : ''}">${ordinal(place)}</span>`;
+
 function nightRow(n, i, players) {
   const chips = n.cheats.map((c) => `<span class="chip">${esc(CHEATS[c].name)}</span>`).join('');
   let cells;
@@ -201,7 +206,7 @@ function nightRow(n, i, players) {
     }).join('');
   }
   const boost = n.generalPoints - n.nightPoints;
-  const place = n.place ? `<span class="place${n.place === 1 ? ' first' : ''}">${ordinal(n.place)}</span>` : '<span class="muted">–</span>';
+  const place = n.place ? placeBadge(n.place) : '<span class="muted">–</span>';
   return `<tr data-row="${i}">
       <th scope="row" class="night-cell">
         <button type="button" class="night-btn" aria-expanded="false" aria-controls="detail-${i}">
@@ -233,8 +238,8 @@ function nightCard(n, i, players) {
     }).join('')}</ol>`;
   }
   const boost = n.generalPoints - n.nightPoints;
-  const place = n.place ? `<span class="place${n.place === 1 ? ' first' : ''}">${ordinal(n.place)}</span>` : '';
-  return `<li class="night-card">
+  const place = n.place ? placeBadge(n.place) : '';
+  return `<li class="night-card${MEDALS[n.place] ? ` medal-${MEDALS[n.place]}` : ''}">
       <div class="card-head">
         <div><strong>${esc(n.id)}</strong>
           <span class="theme">${n.theme ? esc(n.theme) : '<span class="muted">Theme not recorded</span>'}</span></div>
@@ -435,33 +440,107 @@ function tint(v, max) {
   return `background: color-mix(in srgb, var(${v > 0 ? '--series-1' : '--neg'}) ${pct}%, transparent)`;
 }
 
-function byRoundSection(season) {
-  const rows = season.personal.rows.filter((p) => p.played);
-  const max = Math.max(...rows.flatMap((p) => Object.values(p.byRound).map(Math.abs)), 0);
+// One players × rounds table. Each row: { name, byRound: {1..8: points}, unassigned, points,
+// counts?, cellCounts?: {round: counts} }. With `detail`, a last column says what each person did.
+function matrixTable(rows, max, { detail = false } = {}) {
   const head = ROUNDS.map((r) => `<th class="round" scope="col">R${r.n}<span>${r.weekly ? 'weekly' : esc(r.name)}</span></th>`).join('');
   // Points logged for a whole night (no round given) get their own column, only when there are any.
   const hasUnassigned = rows.some((p) => p.unassigned);
+  const cell = (name, label, v, counts) => {
+    const what = counts ? countsText(counts) : '';
+    return `<td class="pcell num" style="${tint(v, max)}" title="${esc(name)}, ${label}: ${pointsText(v)}${what ? ` (${esc(what)})` : ''}">${v ? pointsText(v) : '<span class="muted">·</span>'}</td>`;
+  };
   const body = rows.map((p) => `<tr>
       <th scope="row" class="att-name">${esc(p.name)}</th>
-      ${ROUNDS.map((r) => {
-        const v = p.byRound[r.n];
-        return `<td class="pcell num" style="${tint(v, max)}" title="${esc(p.name)}, round ${r.n}: ${pointsText(v)}">${v ? pointsText(v) : '<span class="muted">·</span>'}</td>`;
-      }).join('')}
-      ${hasUnassigned ? `<td class="pcell num" title="${esc(p.name)}, round not recorded: ${pointsText(p.unassigned)}">${p.unassigned ? pointsText(p.unassigned) : '<span class="muted">·</span>'}</td>` : ''}
-      <td class="total-cell"><b>${fmt(p.points)}</b></td>
+      ${ROUNDS.map((r) => cell(p.name, `round ${r.n}`, p.byRound[r.n], p.cellCounts?.[r.n])).join('')}
+      ${hasUnassigned ? cell(p.name, 'round not recorded', p.unassigned, p.cellCounts?.night) : ''}
+      <td class="total-cell"><b>${detail ? pointsText(p.points) : fmt(p.points)}</b></td>
+      ${detail ? `<td class="what secondary">${esc(countsText(p.counts)) || '<span class="muted">–</span>'}</td>` : ''}
     </tr>`).join('');
-  return `<section class="section">
+  const table = `<table class="sheet attendance byround${detail ? ' with-what' : ''}">
+      <thead><tr><th scope="col" class="att-name">Player</th>${head}${hasUnassigned ? '<th class="round" scope="col" title="Round not recorded">?<span>no round</span></th>' : ''}<th class="total" scope="col">${detail ? 'Night' : 'Total'}</th>${detail ? '<th scope="col" class="what">What they did</th>' : ''}</tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+  return { table, hasUnassigned };
+}
+
+// A night's matrix rows: everyone who went, best night first, in season order on ties.
+function nightMatrixRows(n, players) {
+  return (players ?? [])
+    .filter((p) => n.attendees?.includes(p))
+    .map((name, order) => {
+      const p = nightPersonal(n, name);
+      const byRound = {};
+      const cellCounts = {};
+      for (const [r, c] of Object.entries(p.byRound)) { byRound[r] = c.points; cellCounts[r] = c.counts; }
+      return { name, order, byRound, unassigned: byRound.night ?? 0, cellCounts, counts: p.counts, points: p.points };
+    })
+    .sort((a, b) => b.points - a.points || a.order - b.order);
+}
+
+function byRoundSection(season) {
+  const seasonRows = season.personal.rows.filter((p) => p.played);
+  const seasonMax = Math.max(...seasonRows.flatMap((p) => Object.values(p.byRound).map(Math.abs)), 0);
+  const seasonView = matrixTable(seasonRows, seasonMax);
+
+  // One view per night with personal points. They share a colour scale, so a dark cell means
+  // the same thing on every quiz.
+  const nights = season.nights.filter((n) => n.played && n.personal && Object.keys(n.personal).length);
+  const nightRows = nights.map((n) => nightMatrixRows(n, season.players));
+  const nightMax = Math.max(...nightRows.flat().flatMap((p) => Object.values(p.byRound).map(Math.abs)), 0);
+  const views = [
+    { id: 'season', label: 'Season', html: seasonView.table,
+      note: `Season totals for each round.${seasonView.hasUnassigned ? ' “?” is points from nights where the round wasn’t recorded.' : ''}` },
+    ...nights.map((n, i) => {
+      const v = matrixTable(nightRows[i], nightMax, { detail: true });
+      const total = nightRows[i].reduce((a, p) => a + p.points, 0);
+      return {
+        id: `n${i}`, label: n.id, html: v.table,
+        head: `<div class="matrix-head"><strong>${esc(n.id)}</strong>${n.theme ? `<span class="secondary">${esc(n.theme)}</span>` : ''}${n.place ? placeBadge(n.place) : ''}<span class="matrix-total secondary">${pointsText(total)} personal points in total</span></div>`,
+        note: `Everyone who went to ${esc(n.id)}.${v.hasUnassigned ? ' “?” is points where the round wasn’t recorded.' : ''}`,
+      };
+    }),
+  ];
+  const tabs = views.map((v, i) => `<button type="button" role="tab" id="mtab-${v.id}" aria-controls="mview-${v.id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(v.label)}</button>`).join('');
+  const panels = views.map((v, i) => `<div role="tabpanel" id="mview-${v.id}" aria-labelledby="mtab-${v.id}" class="matrix-view"${i === 0 ? '' : ' hidden'}>
+      ${v.head ?? ''}
+      <div class="panel sheet-scroll fit">${v.html}</div>
+      <p class="matrix-note secondary">${v.note}</p>
+    </div>`).join('');
+  return `<section class="section" id="matrix">
     <div class="section-head">
       <h2>Personal points by round</h2>
-      <p>Season totals for each round. Blue is a net gain, red a net loss.${hasUnassigned ? ' “?” is points from nights where the round wasn’t recorded.' : ''}</p>
+      <p>Blue is a net gain, red a net loss. Pick a quiz to see that night on its own.</p>
     </div>
-    <div class="panel sheet-scroll fit">
-      <table class="sheet attendance byround">
-        <thead><tr><th scope="col" class="att-name">Player</th>${head}${hasUnassigned ? '<th class="round" scope="col" title="Round not recorded">?<span>no round</span></th>' : ''}<th class="total" scope="col">Total</th></tr></thead>
-        <tbody>${body}</tbody>
-      </table>
-    </div>
+    ${views.length > 1 ? `<div class="matrix-tabs" role="tablist" aria-label="Season or a single quiz">${tabs}</div>` : ''}
+    ${panels}
   </section>`;
+}
+
+function wireMatrix() {
+  const list = app.querySelector('.matrix-tabs');
+  if (!list) return;
+  const tabs = [...list.querySelectorAll('[role="tab"]')];
+  const select = (tab) => {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    }
+    tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', (e) => {
+      const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (next == null) return;
+      e.preventDefault();
+      const target = tabs[(next + tabs.length) % tabs.length];
+      select(target);
+      target.focus();
+    });
+  });
 }
 
 // Phone version of the night's personal points: one line per player.

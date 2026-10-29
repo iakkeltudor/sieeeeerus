@@ -171,7 +171,14 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
 .total-cell { text-align: right; font-variant-numeric: tabular-nums; padding: 0 8px; white-space: nowrap; }
 .total-cell .boost { display: block; font-size: 0.78rem; color: var(--good); font-weight: 600; }
 .place { font-weight: 700; }
-.place.first { display: inline-block; background: var(--ink); color: var(--surface); border-radius: 999px; padding: 1px 9px; }
+/* Medal badges keep dark ink in both themes: all three fills are light enough for it. */
+.place.medal {
+  display: inline-block; border-radius: 999px; padding: 1px 10px; color: #13233a;
+  box-shadow: inset 0 0 0 1px rgba(19, 35, 58, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.place.gold { background: linear-gradient(135deg, #fbe39a, #e0aa2a); }
+.place.silver { background: linear-gradient(135deg, #f1f3f6, #b4bac4); }
+.place.bronze { background: linear-gradient(135deg, #f0c193, #c07d43); }
 
 .detail-row > td { padding: 4px 6px 16px; }
 .detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px 32px; padding: 14px 16px; border-radius: 8px; background: var(--page); font-size: 0.92rem; }
@@ -287,6 +294,25 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
   .cheat + .cheat { border-top: 1px solid var(--grid); }
 }
 
+/* Personal points matrix: season / per-quiz switcher ---------------------- */
+.matrix-tabs {
+  display: flex; gap: 4px; margin-bottom: 14px; padding: 4px; width: fit-content; max-width: 100%;
+  overflow-x: auto; scrollbar-width: none;
+  background: var(--surface); border-radius: 999px; box-shadow: 0 0 0 1px var(--ring);
+}
+.matrix-tabs::-webkit-scrollbar { display: none; }
+.matrix-tabs button {
+  flex: none; border: 0; background: transparent; cursor: pointer;
+  padding: 6px 14px; border-radius: 999px; font-weight: 600; font-size: 0.9rem; color: var(--ink-2);
+}
+.matrix-tabs button:hover { color: var(--ink); }
+.matrix-tabs button[aria-selected="true"] { background: var(--ink); color: var(--page); }
+.matrix-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-bottom: 10px; }
+.matrix-head strong { font-family: var(--display); font-size: 1.15rem; }
+.matrix-total { margin-left: auto; font-size: 0.88rem; }
+.matrix-note { margin-top: 8px; font-size: 0.85rem; }
+.byround.with-what .what { text-align: left; font-size: 0.82rem; padding: 0 10px 0 14px; white-space: nowrap; }
+
 /* BeerTracker ------------------------------------------------------------- */
 .beer-figures { margin-bottom: 20px; }
 .beer-figures .dd-sub { font-size: 0.85rem; font-weight: 400; color: var(--ink-2); }
@@ -320,6 +346,9 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
   .card-head strong { display: block; font-size: 1.05rem; }
   .card-head .theme { color: var(--ink-2); font-size: 0.88rem; }
   .card-head .place { flex: none; }
+  .night-card.medal-gold { box-shadow: 0 0 0 1px var(--ring), inset 0 4px 0 #e0aa2a; }
+  .night-card.medal-silver { box-shadow: 0 0 0 1px var(--ring), inset 0 4px 0 #b4bac4; }
+  .night-card.medal-bronze { box-shadow: 0 0 0 1px var(--ring), inset 0 4px 0 #c07d43; }
   .night-card .chips { margin-top: 6px; }
   .card-rounds { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .card-rounds .score { height: 52px; display: grid; place-items: center; font-size: 1.05rem; padding-top: 8px; }
@@ -378,6 +407,9 @@ tr.open .night-btn .chev { transform: rotate(90deg); }
   .byround thead th.att-name { width: 21%; }
   .byround thead th.round { width: 8.75%; padding: 6px 0; text-align: center; }
   .byround thead th.total { width: 9%; text-align: right; padding-right: 6px; }
+  /* No room for the "what they did" column on a phone; the night total stays. */
+  .byround.with-what .what { display: none; }
+  .matrix-total { margin-left: 0; width: 100%; }
   .byround thead th.round span { display: none; }
   .byround .att-name { min-width: 0; padding: 6px 6px 6px 8px; font-size: 0.9rem; }
   .byround .pcell { min-width: 0; height: 32px; font-size: 0.78rem; padding: 0; }
