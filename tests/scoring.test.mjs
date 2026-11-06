@@ -153,7 +153,7 @@ test('season 4 quiz 3 totals 86.41, with half CIs and beers without a type', () 
   assert.equal(q3.base, 75.41);
   assert.equal(q3.nightPoints, 86.41);
   const p = (name) => s4.personal.rows.find((r) => r.name === name);
-  assert.equal(p('Bebu').points, 3.5); // 2 CI + 1 save
+  assert.equal(p('Paul').points, 3.5); // 2 CI + 1 save
   assert.equal(p('Madaras').points, 7.5); // Quiz 2: 2, Quiz 3: 4 CI + 1 save
   assert.equal(p('Claudiu').points, 5); // Quiz 2: 1.5, Quiz 3: 2 CI + 1 save
   assert.equal(p('Marc').points, 4.5);
@@ -191,7 +191,7 @@ test('season 4 quiz 4: team of 10 with reinforcements, 82.5 on the night and 88.
   assert.equal(q4.jokerLoss, 2);
   const p = (name) => s4.personal.rows.find((r) => r.name === name);
   assert.equal(p('Madaras').points, 11.25); // 7.5 before, then 3 CI + half a save (0.75)
-  assert.equal(p('Bebu').points, 9.5); // 3.5 before, then 6 CI
+  assert.equal(p('Paul').points, 9.5); // 3.5 before, then 6 CI
   assert.equal(p('Dragos').points, 21.5); // 19 before, then 1 CI + 1 save
 });
 
