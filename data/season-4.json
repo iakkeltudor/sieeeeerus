@@ -131,10 +131,11 @@
       "cheats": [],
       "personal": {
         "1": { "Dragos": { "ci": 1 } },
-        "2": { "Dragos": { "ci": 1 } },
-        "3": { "Dragos": { "lacheala": 1 } },
-        "4": { "Dragos": { "ci": 1 } },
-        "8": { "Muri": { "ci": 1 } }
+        "2": { "Alin": { "save": "0.33"} },
+        "3": { "Dragos": { "ci": 1 } },
+        "4": { "Dragos": { "lacheala": 1 } },
+        "5": { "Dragos": { "ci": 1 } },
+        "6": { "Muri": { "ci": 1 } }
       },
       "beers": {
         "Alin": { "Unknown": 5 },
