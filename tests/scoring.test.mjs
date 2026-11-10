@@ -1,4 +1,4 @@
-// Run with: node --test tests/
+// Run with: node --test "tests/*.test.mjs"
 // Expected values are the cached results from Sieeeeerus.xlsx (Season 3).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

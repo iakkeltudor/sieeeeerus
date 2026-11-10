@@ -156,7 +156,7 @@ Then open http://localhost:8765.
 ## Tests
 
 ```
-node --test tests/
+node --test "tests/*.test.mjs"
 ```
 
 These check the scoring against the Season 3 numbers from the original workbook.

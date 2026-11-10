@@ -29,7 +29,7 @@ jobs:
         run: node scripts/apply-night.mjs "$GITHUB_EVENT_PATH" "$RUNNER_TEMP/message.txt"
 
       - name: Run the tests
-        run: node --test tests/
+        run: node --test "tests/*.test.mjs"
 
       - name: Commit and push
         run: |
