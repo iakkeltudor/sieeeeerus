@@ -89,7 +89,7 @@
     },
     {
       "id": "Quiz 4",
-      "date": null,
+      "date": "2026-10-26",
       "theme": "Science / Technology",
       "attendees": ["Marc", "Tudorel", "Dragos", "Daria", "Anne", "Matei", "Muri", "Madaras", "Alin", "Paul"],
       "place": 2,
