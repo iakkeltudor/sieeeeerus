@@ -1,9 +1,9 @@
 // The ?v= on these two imports (and on index.html's links to this file and to styles.css) is a
 // manual cache-buster: GitHub Pages lets browsers cache these files for ~10 minutes, so bump every
 // "v=" by one, in all four places, whenever this file, scoring.js, charts.js or styles.css changes.
-import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=7';
-import { fmt, ordinal, shortId, pointsChart, roundsChart, raceChart, raceTop, RACE_COLOURS, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=7';
-import { race, specialists, teamSize, partnerships, beersVsBrains, streaks, jokers } from './stats.js?v=7';
+import { ROUNDS, CHEATS, PERSONAL, MAX_ROUND_SCORE, scoreSeason, validateNight, teamSizeDeduction, nightPersonal } from './scoring.js?v=8';
+import { fmt, ordinal, shortId, pointsChart, roundsChart, raceChart, raceTop, RACE_COLOURS, scoreColor, rampSwatches, bindTip, hideTip } from './charts.js?v=8';
+import { race, specialists, teamSize, partnerships, beersVsBrains, streaks, jokers } from './stats.js?v=8';
 
 const app = document.getElementById('app');
 const tabs = document.getElementById('season-tabs');

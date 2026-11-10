@@ -11,6 +11,8 @@ GitHub Pages lets browsers cache these for about 10 minutes, so a phone can keep
 - `index.html`: the `css/styles.css?v=` link and the `js/app.js?v=` script tag
 - `js/app.js`: the `?v=` on its two imports, `./scoring.js?v=` and `./charts.js?v=`
 
+The add-a-night page has its own: `add.html` links `css/add.css?v=` and `js/add.js?v=`, and `add.js` imports `./night.js?v=`. Bump those when you change those files.
+
 Editing `data/*.json` alone doesn't need a bump — the page fetches those fresh every time.
 
 ## Logging a quiz night
@@ -109,6 +111,32 @@ The page only shows how many beers each person drank, not which ones, but the be
 ```
 
 `beerTypes` only shows up as a note in that night's details. If both are given, their totals must match — the site flags it if they don't.
+
+## Adding a night from the website
+
+Open `add.html` on the site (e.g. `https://iakkeltudor.github.io/sieeeeerus/add.html`) and bookmark it. It isn't linked from the results page.
+
+The form checks the night with the same rules as the site and shows the totals and standings before anything is sent. Pressing **Publish** asks GitHub to run the "Save quiz night" action (`.github/workflows/save-night.yml`). The action checks the night again, runs the tests, and only then commits it to `data/season-N.json` as you. If anything is wrong, nothing is committed and the run on GitHub's Actions tab says why. The site updates 2 to 3 minutes later, and the form tells you when the night is live.
+
+What the form can do:
+- **New night** or **Edit a night** (pick an existing one). Season 3 and nights with totals only can't be edited here.
+- Add new players as you go. Anyone you add and tick is added to the season's players list.
+- Your draft is saved on the phone as you type, so a closed tab or bad Wi-Fi loses nothing.
+- Personal points go in as entries ("R3, Marc, CI x2"). A beer type per person isn't asked for: beers are saved as `Unknown`, with an optional per-night split by beer.
+
+### One-time setup
+
+1. Push this folder, including `.github/workflows/save-night.yml`. In the repo, check **Settings → Actions → General** allows Actions to run.
+2. Create a token: <https://github.com/settings/personal-access-tokens/new>. Choose **Only select repositories → sieeeeerus**, and under repository permissions set **Contents: Read and write**. Set an expiry (90 days is sensible).
+3. On the phone, open `add.html`, open "GitHub token" at the bottom, paste the token, press **Save token** and then **Test it**.
+
+The token is kept in that browser's local storage and never leaves it, except to GitHub. Anyone who has it can change this repository, so don't use it on a shared device, and revoke it on GitHub if a phone is lost.
+
+### If a night doesn't show up
+
+Open the repo's **Actions** tab. A red "Save quiz night" run lists the reasons (for example a name that isn't on the players list). Fix it in the form and publish again. Nothing was saved by a failed run.
+
+To check the same things locally without GitHub: `node scripts/apply-night.mjs <event.json> <message.txt>`, where the event file is `{ "client_payload": { "season": 4, "mode": "add", "newPlayers": [], "night": { ... } } }`.
 
 ## Starting a new season
 

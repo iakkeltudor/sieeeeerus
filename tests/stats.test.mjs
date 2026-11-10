@@ -7,6 +7,8 @@ import { race, specialists, teamSize, partnerships, beersVsBrains, streaks, joke
 
 const load = (f) => JSON.parse(readFileSync(new URL(`../data/${f}`, import.meta.url), 'utf8'));
 const r = (best = 10) => [best, 9, 9, 9, 9, 9, 9, 9];
+// Quizzes 1-4 only, so nights added later don't change these numbers.
+const firstFour = () => { const raw = load('season-4.json'); return { ...raw, nights: raw.nights.filter((n) => ['Quiz 1', 'Quiz 2', 'Quiz 3', 'Quiz 4'].includes(n.id)) }; };
 
 // Three nights, three players: Ana every night, Bogdan nights 1-2, Cris nights 2-3.
 const demo = () => scoreSeason({
@@ -54,7 +56,7 @@ test('team size: raw score before the deduction versus the score on the night', 
   assert.deepEqual(t.groups.map((g) => g.size), [2, 3, 6]);
   assert.equal(t.big, null);
   assert.equal(t.small.nights, 3);
-  const s4 = teamSize(scoreSeason(load('season-4.json')));
+  const s4 = teamSize(scoreSeason(firstFour()));
   const ten = s4.groups.find((g) => g.size === 10);
   assert.equal(ten.raw, 92.5);
   assert.equal(ten.onNight, 82.5);
@@ -89,7 +91,7 @@ test('jokers: hits, misses and the favourite round', () => {
   const j = jokers(demo());
   assert.deepEqual(j.nights.map((n) => n.hit), [true, false, true]);
   assert.deepEqual(j.favourite, { round: 1, count: 2 });
-  const s4 = jokers(scoreSeason(load('season-4.json')));
+  const s4 = jokers(scoreSeason(firstFour()));
   assert.deepEqual(s4.favourite, { round: 6, count: 4 });
 });
 

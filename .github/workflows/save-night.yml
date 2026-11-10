@@ -1,0 +1,51 @@
+name: Save quiz night
+
+# Triggered by the add-a-night form on the site (a repository_dispatch event). The night is
+# checked again, the tests run, and only then is it committed to data/. If anything fails,
+# nothing is committed and the run shows what was wrong.
+on:
+  repository_dispatch:
+    types: [save-night]
+
+permissions:
+  contents: write
+  pages: write
+
+# One night at a time, so two quick submissions can't overwrite each other.
+concurrency:
+  group: save-night
+  cancel-in-progress: false
+
+jobs:
+  save:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply the night
+        run: node scripts/apply-night.mjs "$GITHUB_EVENT_PATH" "$RUNNER_TEMP/message.txt"
+
+      - name: Run the tests
+        run: node --test tests/
+
+      - name: Commit and push
+        run: |
+          git config user.name "Tudor Mihai Iakkel"
+          git config user.email "iakkeltudor@gmail.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Nothing changed, so nothing to commit."
+            exit 0
+          fi
+          git commit -F "$RUNNER_TEMP/message.txt"
+          git push
+
+      # Pushes made by an Action don't always start a Pages build, so ask for one explicitly.
+      # Harmless if a build was already started by the push.
+      - name: Rebuild the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${{ github.repository }}/pages/builds" --silent || echo "::warning::Couldn't request a Pages build; the site will update on the next push."

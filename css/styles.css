@@ -100,6 +100,11 @@ button { font: inherit; color: inherit; }
   @keyframes stretch { from { opacity: 0; transform: translateY(0.25em); } }
 }
 .tagline { margin-top: 14px; color: var(--ink-2); font-size: 1.1rem; }
+.add-link {
+  display: inline-block; margin-top: 14px; padding: 6px 14px; border-radius: 999px; font-size: 0.9rem; font-weight: 600;
+  color: var(--ink); text-decoration: none; background: var(--surface); box-shadow: 0 0 0 1px var(--ring);
+}
+.add-link:hover { box-shadow: 0 0 0 1px var(--ink-2); }
 
 /* Sticky bar: season tabs always in reach; jump links on phones. */
 .stickybar {
