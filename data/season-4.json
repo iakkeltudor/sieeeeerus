@@ -131,7 +131,7 @@
       "cheats": [],
       "personal": {
         "1": { "Dragos": { "ci": 1 } },
-        "2": { "Alin": { "save": 0.33} },
+        "2": { "Alin": { "save": 0.33 } },
         "3": { "Dragos": { "ci": 1 } },
         "4": { "Dragos": { "lacheala": 1 } },
         "5": { "Dragos": { "ci": 1 } },
@@ -145,6 +145,32 @@
         "Marc": { "Unknown": 8 },
         "Muri": { "Unknown": 8 },
         "Paul": { "Unknown": 8 }
+      }
+    },
+    {
+      "id": "Quiz 6",
+      "date": "2026-11-17",
+      "theme": "Sports / Football",
+      "attendees": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Madaras", "Paul", "Matei"],
+      "place": 4,
+      "rounds": [9, 9, 6.5, 9.5, 9, 11, 9, 9.5],
+      "topics": { "4": "Sports", "5": "Football", "7": "Perle Fotbal RO" },
+      "joker": 5,
+      "cheats": ["tripleJoker"],
+      "personal": {
+        "1": { "Marc": { "ci": 1 }, "Paul": { "save": 2 } },
+        "2": { "Dragos": { "ci": 1 }, "Muri": { "ci": 1 } },
+        "3": { "Matei": { "ci": 3 } },
+        "5": { "Matei": { "ci": 2 } },
+        "6": { "Alin": { "save": 1 }, "Marc": { "ci": 1 } },
+        "7": { "Matei": { "ci": 1 } }
+      },
+      "beers": {
+        "Iakkel": { "Unknown": 7 },
+        "Madaras": { "Unknown": 3 },
+        "Marc": { "Unknown": 7 },
+        "Matei": { "Unknown": 4 },
+        "Paul": { "Unknown": 7 }
       }
     }
   ]
