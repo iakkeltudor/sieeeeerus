@@ -195,9 +195,10 @@ const shell = () => `
       <select id="ad-round" aria-label="Round">${ROUNDS.map((r) => `<option value="${r.n}">R${r.n} · ${esc(r.name)}</option>`).join('')}<option value="night">Round not known</option></select>
       <select id="ad-player" aria-label="Player"></select>
       <select id="ad-cat" aria-label="What happened">${CATS.map((c) => `<option value="${c.key}">${esc(c.name)} (${signed(PERSONAL[c.key].points)})</option>`).join('')}</select>
-      <input id="ad-n" type="number" inputmode="decimal" step="0.5" min="0.5" value="1" aria-label="How many">
+      <input id="ad-n" inputmode="decimal" autocomplete="off" value="1" aria-label="How many">
       <button type="button" class="btn" data-action="add-entry">Add entry</button>
     </div>
+    <p class="hint" id="ad-msg" role="status" style="color:var(--bad-text);margin:-4px 0 8px"></p>
     <ul class="entries" id="entries"></ul>
   </section>
 
@@ -417,8 +418,12 @@ root.addEventListener('click', (e) => {
     renderPreview();
   } else if (act === 'add-entry') {
     const player = $('#ad-player').value;
+    // Accepts 1, 2, 0.5, 1.5 and "0,5" (phones with a comma decimal key).
     const n = parseNum($('#ad-n').value);
-    if (!player || !(n > 0)) return;
+    const msg = $('#ad-msg');
+    if (!player) { msg.textContent = 'Tick who went first, then pick the person.'; return; }
+    if (!(n > 0)) { msg.textContent = 'Enter how many, e.g. 1, 2 or 0.5.'; return; }
+    msg.textContent = '';
     const round = $('#ad-round').value;
     state.entries.push({ round, player, cat: $('#ad-cat').value, n });
     $('#ad-n').value = '1';
