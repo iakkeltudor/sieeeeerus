@@ -1,6 +1,6 @@
 {
   "season": 4,
-  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras", "Paul", "Tudorel", "Daria", "Anne", "Matei", "Vica"],
+  "players": ["Iakkel", "Dragos", "Marc", "Muri", "Alin", "Kollar", "Claudiu", "Dani", "Madaras", "Paul", "Tudorel", "Daria", "Anne", "Matei", "Vica", "Laura"],
   "nights": [
     {
       "id": "Quiz 1",
@@ -173,6 +173,33 @@
         "Matei": { "Unknown": 4 },
         "Muri": { "Unknown": 6 },
         "Paul": { "Unknown": 7 }
+      }
+    },
+    {
+      "id": "Quiz 7",
+      "date": "2026-11-24",
+      "theme": "Literature / dm",
+      "attendees": ["Iakkel", "Dragos", "Marc", "Alin", "Vica", "Daria", "Laura"],
+      "place": 1,
+      "rounds": [11, 11, 11, 6, 9, 11, 11, 10.25],
+      "topics": { "4": "Literature", "5": "dm", "7": "Desene Animate" },
+      "joker": 6,
+      "cheats": [],
+      "personal": {
+        "1": { "Vica": { "ci": 3 } },
+        "4": { "Daria": { "ci": 1 } },
+        "5": { "Daria": { "ci": 1 }, "Laura": { "ci": 3 } },
+        "6": { "Marc": { "ci": 1 } },
+        "7": { "Marc": { "ci": 1 } },
+        "8": { "Alin": { "lacheala": 1 } }
+      },
+      "beers": {
+        "Alin": { "Unknown": 4 },
+        "Daria": { "Unknown": 4 },
+        "Dragos": { "Unknown": 5 },
+        "Iakkel": { "Unknown": 4 },
+        "Laura": { "Unknown": 2 },
+        "Marc": { "Unknown": 6 }
       }
     }
   ]
