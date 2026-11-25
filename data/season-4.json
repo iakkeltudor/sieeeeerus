@@ -156,6 +156,10 @@
       "rounds": [9, 9, 6.5, 9.5, 9, 11, 9, 9.5],
       "topics": { "4": "Sports", "5": "Football", "7": "Perle Fotbal RO" },
       "joker": 5,
+      "scoreAdjustment": {
+        "standings": 2,
+        "reason": "suntem smecheri"
+      },
       "cheats": ["tripleJoker"],
       "personal": {
         "1": { "Marc": { "ci": 1 }, "Paul": { "save": 2 } },
