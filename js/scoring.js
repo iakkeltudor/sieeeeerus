@@ -172,7 +172,8 @@ function scoreOne(input) {
       general = manual;
     } else if (hasRounds) {
       night_ = base + (jokerScore ?? 0) - deduction;
-      general = base + (jokerScore ?? 0) - standingsDeduction + tripleExtra + noYouExtra;
+      general = base + (jokerScore ?? 0) - standingsDeduction + tripleExtra + noYouExtra
+        + (night.scoreAdjustment?.standings ?? 0);
     }
   }
 
